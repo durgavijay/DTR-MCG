@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DTR-MCG-PAS Integration Workflow Guide</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f7fa; }
+    h1 { color: #1a365d; border-bottom: 3px solid #3182ce; padding-bottom: 10px; margin-bottom: 20px; }
+    h2 { color: #2c5282; margin-top: 30px; margin-bottom: 15px; padding: 10px; background: #ebf8ff; border-left: 4px solid #3182ce; }
+    h3 { color: #2d3748; margin-top: 20px; margin-bottom: 10px; }
+    h4 { color: #4a5568; margin-top: 15px; margin-bottom: 8px; }
+    p { margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+    th { background: #4299e1; color: white; font-weight: 600; }
+    tr:nth-child(even) { background: #f7fafc; }
+    tr:hover { background: #edf2f7; }
+    pre { background: #1a202c; color: #e2e8f0; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 15px 0; font-size: 13px; }
+    code { font-family: 'Consolas', 'Monaco', monospace; }
+    .inline-code { background: #edf2f7; padding: 2px 6px; border-radius: 4px; font-size: 14px; color: #e53e3e; }
+    .card { background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .flow-diagram { background: #1a202c; color: #68d391; padding: 20px; border-radius: 8px; font-family: monospace; white-space: pre; overflow-x: auto; line-height: 1.4; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-right: 5px; }
+    .badge-blue { background: #bee3f8; color: #2b6cb0; }
+    .badge-green { background: #c6f6d5; color: #276749; }
+    .badge-orange { background: #feebc8; color: #c05621; }
+    .badge-red { background: #fed7d7; color: #c53030; }
+    .badge-purple { background: #e9d8fd; color: #6b46c1; }
+    .badge-yellow { background: #fefcbf; color: #975a16; }
+    .section { margin-bottom: 30px; }
+    .toc { background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .toc ul { list-style: none; padding-left: 0; }
+    .toc li { padding: 5px 0; }
+    .toc a { color: #3182ce; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .alert { padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .alert-info { background: #ebf8ff; border-left: 4px solid #3182ce; }
+    .alert-warning { background: #fffaf0; border-left: 4px solid #dd6b20; }
+    .alert-success { background: #f0fff4; border-left: 4px solid #38a169; }
+    .alert-danger { background: #fff5f5; border-left: 4px solid #c53030; }
+    .error-category { background: #2d3748; color: white; padding: 8px 15px; margin: 20px 0 10px 0; border-radius: 5px; font-weight: 600; }
+    .question-box { background: #fffaf0; border: 2px dashed #ed8936; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .question-box h4 { color: #c05621; margin-bottom: 10px; }
+    .question-box ul { margin-left: 20px; }
+    .question-box li { margin-bottom: 12px; color: #744210; }
+    .answered-block { margin-top: 6px; background: #f0fff4; border-left: 3px solid #38a169; padding: 8px 12px; border-radius: 4px; color: #276749; }
+    .workflow-container { position: relative; padding: 20px 0; }
+    .workflow-step { display: flex; margin-bottom: 30px; position: relative; }
+    .workflow-step:last-child { margin-bottom: 0; }
+    .workflow-step::before { content: ''; position: absolute; left: 30px; top: 70px; bottom: -30px; width: 4px; background: linear-gradient(180deg, #667eea, #764ba2); border-radius: 2px; }
+    .workflow-step:last-child::before { display: none; }
+    .step-number { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; flex-shrink: 0; z-index: 1; box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+    .step-content { flex: 1; margin-left: 25px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-left: 4px solid #667eea; }
+    .step-content h4 { color: #2d3748; margin-bottom: 10px; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+    .step-content p { color: #4a5568; margin-bottom: 10px; }
+    .step-details { background: #f7fafc; border-radius: 8px; padding: 15px; margin-top: 15px; }
+    .step-details h5 { color: #2d3748; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .step-details ul { margin-left: 20px; color: #4a5568; }
+    .step-details li { margin-bottom: 5px; }
+    .endpoint-box { background: #1a202c; color: #68d391; padding: 10px 15px; border-radius: 6px; font-family: monospace; margin: 10px 0; display: inline-block; }
+    .data-flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+    .data-item { background: #e9d8fd; color: #553c9a; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+    .arrow { color: #667eea; font-size: 20px; }
+    .resource-bubbles-container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; margin: 20px 0; }
+    .resource-bubble { padding: 15px 25px; border-radius: 50px; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.3s ease; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; }
+    .resource-bubble:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+    .resource-bubble.active { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(255,255,255,0.5), 0 8px 25px rgba(0,0,0,0.3); }
+    .bubble-coverage { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; }
+    .bubble-servicerequest { background: linear-gradient(135deg, #4299e1, #3182ce); color: white; }
+    .bubble-patient { background: linear-gradient(135deg, #48bb78, #38a169); color: white; }
+    .bubble-practitioner { background: linear-gradient(135deg, #ed8936, #dd6b20); color: white; }
+    .bubble-location { background: linear-gradient(135deg, #fc8181, #e53e3e); color: white; }
+    .bubble-encounter { background: linear-gradient(135deg, #f6e05e, #d69e2e); color: #744210; }
+    .bubble-organization { background: linear-gradient(135deg, #4fd1c5, #319795); color: white; }
+    .bubble-claim { background: linear-gradient(135deg, #667eea, #5a67d8); color: white; }
+    .bubble-questionnaireresponse { background: linear-gradient(135deg, #ed64a6, #d53f8c); color: white; }
+    .resource-panel { display: none; animation: slideDown 0.4s ease; background: white; border-radius: 12px; padding: 25px; margin-top: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border-top: 5px solid #667eea; }
+    .resource-panel.active { display: block; }
+    .resource-panel h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; }
+    .resource-panel-wrapper { position: relative; }
+    .close-btn { position: absolute; top: 15px; right: 20px; background: #e53e3e; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    .mapping-table th { background: #667eea; }
+    .mapping-table tr:hover { background: #e9d8fd; }
+    .pas-mapping-table th { background: #38a169; color: white; font-weight: 600; }
+    .pas-mapping-table tr:hover { background: #c6f6d5; }
+    .payload-pre { max-height: 560px; overflow-y: auto; overflow-x: auto; background: #1a202c; color: #e2e8f0; padding: 15px; border-radius: 8px; font-size: 12px; font-family: 'Consolas','Monaco',monospace; white-space: pre; margin: 0; line-height: 1.5; }
+    @media print { body { background: white; } .card { box-shadow: none; border: 1px solid #e2e8f0; } }
+  </style>
+</head>
+<body>
+
+<h1>🏥 DTR-MCG-PAS Integration Workflow Guide</h1>
+
+<div class="toc card">
+  <h3>📋 Table of Contents</h3>
+  <ul>
+    <li><a href="#overview">1. Overview</a></li>
+    <li><a href="#architecture">2. Architecture</a></li>
+    <li><a href="#e2e-workflow">3. End-to-End Integration Workflow</a></li>
+    <li><a href="#resource-mappings">4. Resource Mappings for $questionnaire-package</a></li>
+    <li><a href="#mcg-rule-types">5. MCG Rule Types</a></li>
+    <li><a href="#prerequisites">6. Pre-Requisites: Admin Site Configuration</a></li>
+    <li><a href="#pas-resource-mappings">7. Resource Mappings for PAS $submit</a></li>
+    <li><a href="#dtr-phase">8. Phase 1: DTR (Documentation Templates and Rules)</a></li>
+    <li><a href="#questionnaire-response">9. Phase 2: Build QuestionnaireResponse</a></li>
+    <li><a href="#pas-phase">10. Phase 3: PAS (Prior Authorization Support)</a></li>
+    <li><a href="#validation-errors">11. Common Validation Errors &amp; Solutions</a></li>
+    <li><a href="#complete-flow">12. Complete Flow Diagram</a></li>
+    <li><a href="#best-practices">13. Best Practices</a></li>
+    <li><a href="#api-summary">14. API Endpoints Summary</a></li>
+    <li><a href="#identifiers">15. Key Identifiers to Track</a></li>
+    <li><a href="#sample-payload">16. Sample PAS $submit Payload</a></li>
+  </ul>
+</div>
+
+<!-- ==================== SECTION 1 ==================== -->
+<div id="overview" class="section">
+  <h2>1. Overview</h2>
+  <div class="card">
+    <p>This document covers the complete workflow for integrating with MCG's DTR (Documentation Templates and Rules) and PAS (Prior Authorization Support) APIs for healthcare prior authorization.</p>
+    <div class="alert alert-info">
+      <strong>Key Components:</strong>
+      <ul style="margin-top:10px;margin-left:20px;">
+        <li><strong>DTR</strong> - Retrieve clinical questionnaires and collect documentation</li>
+        <li><strong>PAS</strong> - Submit prior authorization requests and receive decisions</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 2 ==================== -->
+<div id="architecture" class="section">
+  <h2>2. Architecture Overview</h2>
+  <div class="card">
+    <div class="flow-diagram">
++-------------------+         +-------------------+         +-------------------+
+|                   |         |                   |         |                   |
+|  Provider System  |         |     MCG APIs      |         |   Payer System    |
+|     (EHR/EMR)     |  -----> |      (DTR)        |  -----> |   (GuidingCare)   |
+|                   |         |                   |         |                   |
+|  - ServiceRequest |         |  - $questionnaire |         |  - Auth Decision  |
+|  - Patient Data   |  <----- |  - $next-question |  <----- |  - ClaimResponse  |
+|  - Coverage Info  |         |                   |         |  - preAuthRef     |
+|                   |         |                   |         |                   |
++-------------------+         +-------------------+         +-------------------+</div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 3 ==================== -->
+<div id="e2e-workflow" class="section">
+  <h2>3. End-to-End Integration Workflow</h2>
+  <div class="alert alert-info"><strong>📌 This section describes the complete flow from Provider submission to displaying guideline outcomes</strong></div>
+  <div class="workflow-container">
+    <div class="workflow-step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <h4>📤 Provider Sends Claim to GuidingCare</h4>
+        <p>The Provider system (EHR/EMR) sends a Claim payload to GuidingCare via the POST Claim endpoint. If there is any guideline-related information collected from the DTR flow, the provider includes the <strong>QuestionnaireResponse</strong> resource in the payload.</p>
+        <div class="endpoint-box">POST /Claim/$submit → GuidingCare</div>
+        <div class="step-details">
+          <h5>📦 Payload Contents</h5>
+          <ul>
+            <li><strong>Claim</strong> - The prior authorization request with CPT codes, diagnosis codes</li>
+            <li><strong>Coverage</strong> - Patient insurance information</li>
+            <li><strong>Patient</strong> - Patient demographics</li>
+            <li><strong>Practitioner(s)</strong> - Requesting and attending providers</li>
+            <li><strong>Location</strong> - Facility Provider</li>
+            <li><strong>Organization</strong> - Payer organization</li>
+            <li><strong>QuestionnaireResponse</strong> (if applicable) - Clinical answers from DTR questionnaire</li>
+          </ul>
+        </div>
+        <div class="data-flow">
+          <span class="data-item">Provider EHR</span><span class="arrow">→</span>
+          <span class="data-item">Claim Bundle</span><span class="arrow">→</span>
+          <span class="data-item">GuidingCare PAS Claim API</span>
+        </div>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <h4>🔄 GuidingCare Builds MCG Payload &amp; Calls PAS Submit</h4>
+        <p>GuidingCare receives the Claim payload, transforms it into the MCG-required format, and sends it to the <strong>MCG PAS Submit</strong> endpoint. The response contains the <strong>disposition</strong> (decision status) and <strong>Episode ID</strong>.</p>
+        <div class="endpoint-box">POST /Claim/$submit → MCG PAS API</div>
+        <div class="step-details">
+          <h5>🔧 Transformation Steps</h5>
+          <ul>
+            <li>Extract resources from incoming Claim bundle</li>
+            <li>Map GuidingCare fields to MCG FHIR format</li>
+            <li>Build PAS Request Bundle with proper profiles</li>
+            <li>Wrap QuestionnaireResponse in DTR-QRBundle (nested bundle)</li>
+            <li>Add required extensions (serviceItemRequestType, certificationType)</li>
+          </ul>
+        </div>
+        <div class="step-details" style="margin-top:15px;">
+          <h5>📥 Response from MCG PAS</h5>
+          <ul>
+            <li><strong>ClaimResponse</strong> - Contains authorization decision</li>
+            <li><strong>disposition</strong> - Decision status (Approved/Denied/Pended)</li>
+            <li><strong>preAuthRef</strong> - Authorization reference number</li>
+            <li><strong>Episode ID</strong> - MCG case tracking identifier (captured for next step)</li>
+          </ul>
+        </div>
+        <div class="data-flow">
+          <span class="data-item">GuidingCare</span><span class="arrow">→</span>
+          <span class="data-item">MCG PAS Bundle</span><span class="arrow">→</span>
+          <span class="data-item">MCG PAS API</span><span class="arrow">→</span>
+          <span class="data-item">ClaimResponse + Episode ID</span>
+        </div>
+        <table style="margin-top:15px;">
+          <tr><th>Disposition</th><th>Meaning</th><th>Action</th></tr>
+          <tr><td><span class="badge badge-green">Approved</span></td><td>Authorization granted</td><td>Proceed with service</td></tr>
+          <tr><td><span class="badge badge-red">Denied</span></td><td>Authorization rejected</td><td>Review reasons, appeal if needed</td></tr>
+          <tr><td><span class="badge badge-orange">Pended</span></td><td>Needs manual review</td><td>Wait for reviewer decision</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <h4>📊 Call MCG CareWebQI, Display Guideline Outcomes &amp; Update Service Lines</h4>
+        <p>Using the <strong>Episode ID</strong> captured from Step 2, GuidingCare calls the <strong>MCG CareWebQI</strong> endpoint to retrieve detailed guideline evaluation outcomes.</p>
+        <div class="endpoint-box">GET /CareWebQI/{episodeId} → MCG CareWebQI API</div>
+        <div class="step-details">
+          <h5>🔄 Service Line Update Logic — Based on Disposition</h5>
+          <table style="margin-top:8px;">
+            <tr><th>Disposition</th><th>Show in Run Guidelines?</th><th>Update Service Line?</th></tr>
+            <tr><td><span class="badge badge-orange">Pended / Pending</span></td><td>✅ Yes</td><td>❌ No</td></tr>
+            <tr><td><span class="badge badge-green">Approved</span></td><td>✅ Yes</td><td>✅ Yes</td></tr>
+            <tr><td><span class="badge badge-red">Denied</span></td><td>✅ Yes</td><td>✅ Yes</td></tr>
+            <tr><td><span class="badge badge-purple">Partial</span></td><td>✅ Yes</td><td>✅ Yes</td></tr>
+          </table>
+        </div>
+ <div class="data-flow">
+          <span class="data-item">Access authorization</span><span class="arrow">→</span>
+          <span class="data-item">Edit decision</span><span class="arrow">→</span>
+          <span class="data-item">Run guidelines</span><span class="arrow">→</span>
+          <span class="data-item">Need to see episode ID for all service lines</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 4 ==================== -->
+<div id="resource-mappings" class="section">
+  <h2>4. Resource Mappings for $questionnaire-package</h2>
+  <div class="alert alert-info"><strong>📌 Click on any resource bubble below to view its field mappings and open questions</strong></div>
+
+  <div id="section4-bubbles" class="resource-bubbles-container">
+    <div class="resource-bubble bubble-coverage"       onclick="showPanel('coverage')">🛡️ Coverage</div>
+    <div class="resource-bubble bubble-servicerequest" onclick="showPanel('servicerequest')">📋 ServiceRequest</div>
+    <div class="resource-bubble bubble-patient"        onclick="showPanel('patient')">👤 Patient</div>
+    <div class="resource-bubble bubble-practitioner"   onclick="showPanel('practitioner')">👨‍⚕️ Practitioner</div>
+    <div class="resource-bubble bubble-location"       onclick="showPanel('location')">📍 Location</div>
+    <div class="resource-bubble bubble-encounter"      onclick="showPanel('encounter')">🏥 Encounter</div>
+    <div class="resource-bubble bubble-organization"   onclick="showPanel('organization')">🏢 Organization</div>
+  </div>
+
+  <!-- Coverage Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-coverage" class="resource-panel">
+      <button class="close-btn" onclick="hidePanel('coverage')">×</button>
+      <h3>🛡️ Coverage Resource Mappings</h3>
+      <table class="mapping-table">
+        <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td><span class="inline-code">subscriber</span></td><td>Patient reference</td><td>Reference to Patient resource</td></tr>
+        <tr><td><span class="inline-code">subscriberId</span></td><td>MAC configuration for Member ID</td><td>Member ID configured in MAC</td></tr>
+        <tr><td><span class="inline-code">beneficiary</span></td><td>Patient reference</td><td>Use if relationship is "self"</td></tr>
+        <tr><td><span class="inline-code">payor</span></td><td>Organization reference</td><td>Reference to payer Organization resource</td></tr>
+        <tr><td><span class="inline-code">class.type.code</span></td><td>"plan"</td><td>Fixed value</td></tr>
+        <tr><td><span class="inline-code">class.value</span></td><td>Benefit Plan Name</td><td>From eligibility record</td></tr>
+        <tr><td><span class="inline-code">period.start</span></td><td>Eligibility Start Date</td><td>Policy effective start date</td></tr>
+        <tr><td><span class="inline-code">period.end</span></td><td>Eligibility End Date</td><td>Policy effective end date</td></tr>
+      </table>
+      <div class="question-box">
+        <h4>❓ Open Questions</h4>
+        <ul>
+          <li><strong>BenefitPlanID:</strong> [GC] Unable to find mapping in auto auth - need clarification.</li>
+          <li><strong>BenefitGroupID:</strong> Currently NULL - need to determine if required</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ServiceRequest Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-servicerequest" class="resource-panel">
+      <button class="close-btn" onclick="hidePanel('servicerequest')">×</button>
+      <h3>📋 ServiceRequest Resource Mappings</h3>
+      <table class="mapping-table">
+        <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td><span class="inline-code">code.coding.code</span></td><td>Procedure Code</td><td>CPT/HCPCS code</td></tr>
+        <tr><td><span class="inline-code">subject</span></td><td>Patient reference</td><td>Reference to Patient resource</td></tr>
+        <tr><td><span class="inline-code">requester</span></td><td>Requesting Provider</td><td>Practitioner reference</td></tr>
+        <tr><td><span class="inline-code">performer</span></td><td>Attending Provider</td><td>Practitioner reference</td></tr>
+        <tr><td><span class="inline-code">locationReference</span></td><td>Facility Provider</td><td>Location reference</td></tr>
+        <tr><td><span class="inline-code">insurance</span></td><td>Coverage reference</td><td>Reference to Coverage resource</td></tr>
+        <tr><td><span class="inline-code">authoredOn</span></td><td>Requested Date of Service</td><td>Date authorization was requested</td></tr>
+      </table>
+      <div class="question-box">
+        <h4>❓ Open Questions</h4>
+        <ul>
+          <li><strong>Quantity mapping:</strong> Need to confirm which GC field maps to ServiceRequest.quantity</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-patient" class="resource-panel">
+      <button class="close-btn" onclick="hidePanel('patient')">×</button>
+      <h3>👤 Patient Resource Mappings</h3>
+      <table class="mapping-table">
+        <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td><span class="inline-code">identifier.value</span></td><td>AltruistaID</td><td>Use "MB" as identifier type code</td></tr>
+        <tr><td><span class="inline-code">name.given</span></td><td>First Name</td><td>Copy from GC Patient resource</td></tr>
+        <tr><td><span class="inline-code">name.family</span></td><td>Last Name</td><td>Copy from GC Patient resource</td></tr>
+        <tr><td><span class="inline-code">gender</span></td><td>Gender</td><td>Copy from GC Patient FHIR API</td></tr>
+        <tr><td><span class="inline-code">address</span></td><td>Address</td><td>Copy from GC Patient FHIR API</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Practitioner Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-practitioner" class="resource-panel">
+      <button class="close-btn" onclick="hidePanel('practitioner')">×</button>
+      <h3>👨‍⚕️ Practitioner Resource Mappings</h3>
+      <table class="mapping-table">
+        <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td><span class="inline-code">identifier.value</span></td><td>NPI</td><td>National Provider Identifier</td></tr>
+        <tr><td><span class="inline-code">identifier.system</span></td><td>"http://hl7.org/fhir/sid/us-npi"</td><td>Fixed NPI system URL</td></tr>
+        <tr><td><span class="inline-code">name</span></td><td>Provider Name</td><td>Copy from GC Practitioner resource</td></tr>
+        <tr><td><span class="inline-code">address</span></td><td>Address</td><td>Copy from GC Practitioner resource</td></tr>
+      </table>
+      <div class="question-box">
+        <h4>❓ Open Questions</h4>
+        <ul>
+          <li><strong>Facility as Location vs Practitioner:</strong> MCG references Location resource for facility. Need to ask MCG if we can reference Practitioner instead.</li>
+          <li>Facility Provider [GC] → location reference [MCG]</li>
+          <li>ReferredBy Provider [GC] → servicerequest.requester [MCG]</li>
+          <li>Admitting Provider [GC] → servicerequest.performer [MCG]</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Location Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-location" class="resource-panel">
+      <button class="close-btn" onclick="hidePanel('location')">×</button>
+      <h3>📍 Location Resource Mappings</h3>
+      <table class="mapping-table">
+        <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td><span class="inline-code">type.coding.code</span></td><td>Place of Service Code</td><td>CMS Place of Service code</td></tr>
+        <tr><td><span class="inline-code">name</span></td><td>Facility Name</td><td>From facility provider</td></tr>
+        <tr><td><span class="inline-code">address</span></td><td>Facility Address</td><td>From facility provider</td></tr>
+      </table>
+      <div class="question-box">
+        <h4>❓ Open Questions</h4>
+        <ul>
+          <li>Mapped to the facility provider. Need to check with MCG</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Encounter Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-encounter" class="resource-panel">
+      <button class="close-btn" onclick="hidePanel('encounter')">×</button>
+      <h3>🏥 Encounter Resource Mappings</h3>
+      <table class="mapping-table">
+        <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td><span class="inline-code">class.code</span></td><td>Authorization.RequestedLevelOfCare</td><td>Level of care (IMP, AMB, EMER, etc.)</td></tr>
+        <tr><td><span class="inline-code">status</span></td><td>"planned"</td><td>Fixed value for PA requests</td></tr>
+        <tr><td><span class="inline-code">subject</span></td><td>Patient reference</td><td>Reference to Patient resource</td></tr>
+      </table>
+      </div>
+  </div>
+
+  <!-- Organization Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-organization" class="resource-panel">
+      <button class="close-btn" onclick="hidePanel('organization')">×</button>
+      <h3>🏢 Organization Resource Mappings</h3>
+      <table class="mapping-table">
+        <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td><span class="inline-code">identifier.value</span></td><td>NPI</td><td>Organization NPI</td></tr>
+        <tr><td><span class="inline-code">name</span></td><td>Organization Name</td><td>Payer/Insurer name</td></tr>
+        <tr><td><span class="inline-code">type.coding.code</span></td><td>"pay"</td><td>For payer organizations</td></tr>
+        <tr><td><span class="inline-code">address</span></td><td>Address</td><td>Organization address</td></tr>
+      </table>
+      <div class="alert alert-info" style="margin-top:15px;"><strong>📌 Note:</strong> Organization is referenced by Coverage.payor for the payer/insurer. Need to see the GuidingCare mapping.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 5 ==================== -->
+<div id="mcg-rule-types" class="section">
+  <h2>5. MCG Rule Types</h2>
+  <div class="alert alert-info"><strong>📌 Overview:</strong> MCG supports 3 types of rules that operate at different phases of the DTR-MCG-PAS integration.</div>
+  <div class="card">
+    <h3>🗂️ Rule Types at a Glance</h3>
+    <table>
+      <tr><th>Rule Type</th><th>Triggered By</th><th>API Endpoint</th><th>Output</th></tr>
+      <tr><td><span class="badge badge-blue">Pre Guideline</span></td><td>DTR Questionnaire Package request</td><td><span class="inline-code">$questionnaire-package</span></td><td>Standard or Adaptive Questionnaire</td></tr>
+      <tr><td><span class="badge badge-green">Post Guideline</span></td><td>PAS Submit request</td><td><span class="inline-code">Claim/$submit</span></td><td>Disposition (Approved / Denied / Pended etc.)</td></tr>
+      <tr><td><span class="badge badge-orange">Submit Phase</span></td><td>PAS Submit request</td><td><span class="inline-code">Claim/$submit</span></td><td>Status change from Pended → Pending</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 6 ==================== -->
+<div id="prerequisites" class="section">
+  <h2>6. Pre-Requisites: Admin Site Configuration for DTR-MCG</h2>
+  <div class="alert alert-warning"><strong>⚠️ Important:</strong> Before working on DTR-MCG integration, the following configurations <strong>must be verified or set up</strong> in the Admin Site.</div>
+  <div class="card" style="border-left:4px solid #e53e3e;">
+    <h3>✅ Pre-Requisite Checklist</h3>
+    <table>
+      <tr><th>#</th><th>Pre-Requisite</th><th>Admin Site Navigation</th><th>Impact if Missing</th></tr>
+      <tr><td><span class="badge badge-red">P1</span></td><td>Rules configured in Admin Site</td><td>Login to Admin Site → Click Admin → Click Configuration → Click Rule Adminstrator</td><td>No guideline evaluation triggered</td></tr>
+      <tr><td><span class="badge badge-red">P2</span></td><td>Service Type &amp; Level of Care Association</td><td>Login to Admin Site → Click Admin → Click Customize → Click the link in Customize Collaborative Care Configurations
+</td><td>PAS API will throw error if no match found</td></tr>
+      <tr><td><span class="badge badge-red">P3</span></td><td>LOB (Line of Business) configured</td><td>Login to Admin Site → Click Admin → Click Customize → Customize Line Of Business</td><td>LOB not visible in authorization summary</td></tr>
+      <tr><td><span class="badge badge-red">P4</span></td><td>Disposition status configured</td><td>Login to Admin Site → Click Admin → Click Customize → Click Customize Auto Authorization Dropdowns → Click Auto-Auth Request Status → </td><td>Disposition wil not display correctly in the response from MCG PAS API</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 7 ==================== -->
+<div id="pas-resource-mappings" class="section">
+  <h2>7. Resource Mappings for PAS $submit</h2>
+  <div class="alert alert-success"><strong>📌 Click on any resource bubble below to view its field mappings</strong></div>
+  <div id="section7-bubbles" class="resource-bubbles-container">
+    <div class="resource-bubble bubble-claim"               onclick="showPasPanel('pas-claim')">📄 Claim</div>
+    <div class="resource-bubble bubble-patient"            onclick="showPasPanel('pas-patient')">👤 Patient</div>
+    <div class="resource-bubble bubble-coverage"           onclick="showPasPanel('pas-coverage')">🛡️ Coverage</div>
+    <div class="resource-bubble bubble-practitioner"       onclick="showPasPanel('pas-practitioner')">👨‍⚕️ Practitioner</div>
+    <div class="resource-bubble bubble-location"           onclick="showPasPanel('pas-location')">📍 Location</div>
+    <div class="resource-bubble bubble-questionnaireresponse" onclick="showPasPanel('pas-qr')">📝 QuestionnaireResponse</div>
+  </div>
+
+  <!-- PAS Claim Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-pas-claim" class="resource-panel" style="border-top-color:#38a169;">
+      <button class="close-btn" onclick="hidePasPanel('pas-claim')">×</button>
+      <h3>📄 Claim Resource Mappings (PAS $submit)</h3>
+      <table class="pas-mapping-table">
+        <tr><th>MCG Auto Auth Field</th><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td>Episode ID</td><td><span class="inline-code">claim.identifier</span></td><td>Episode ID</td><td>Unique Identifier for a guideline</td></tr>
+	<tr><td>Created date time</td><td><span class="inline-code">claim.created</span></td><td>Creation date-time</td><td>Guideline insertion date-time into GC.</td></tr>
+        <tr><td>Level of Care</td><td><span class="inline-code">claim.type</span></td><td>Auth Class</td><td>Authorization type classification</td></tr>
+        <tr><td>Place of Service</td><td><span class="inline-code">claim.item.locationCodeableConcept</span></td><td>Place of Service</td><td>CMS Place of Service code</td></tr>
+        <tr><td>Service Type</td><td><span class="inline-code">claim.item.category</span></td><td>Admit Reason</td><td>Type of service being requested</td></tr>
+        <tr><td>Date of Service</td><td><span class="inline-code">claim.item.servicedDate</span></td><td>Auth Notification Date</td><td>Requested date of service</td></tr>
+        <tr><td>Diagnosis Codes</td><td><span class="inline-code">claim.diagnosis.diagnosisCodeableConcept</span></td><td>Diagnosis Codes</td><td>ICD-10 codes in diagnosis array</td></tr>
+        <tr><td>Procedure Codes</td><td><span class="inline-code">claim.item.productOrService.coding.code</span></td><td>Procedure Code</td><td>CPT/HCPCS codes</td></tr>
+        <tr><td>Urgent</td><td><span class="inline-code">claim.priority</span></td><td>Auth Priority (TAT config isExpedited)</td><td>Priority/urgency indicator</td></tr>
+<tr><td>Diagnosis codes</td><td><span class="inline-code">claim.diagnosis</span></td><td>Diagnosis codes</td><td>Category in the system, codes in the code.</td></tr>
+<tr><td>patient linkage</td><td><span class="inline-code">claim.patient</span></td><td>Reference patient</td><td>Resource patient</td></tr>
+<tr><td>organization linkage</td><td><span class="inline-code">claim.insurer</span></td><td>Reference organization</td><td>Resource organization</td></tr>
+<tr><td>practitioner linkage</td><td><span class="inline-code">claim.provider</span></td><td>Reference practitioner</td><td>Resource practitioner</td></tr>
+<tr><td>facility provider linkage</td><td><span class="inline-code">claim.facility</span></td><td>Reference location</td><td>Resource location</td></tr>
+<tr><td>Eligibility details</td><td><span class="inline-code">claim.insurance</span></td><td>Reference coverage</td><td>Resource coverage</td></tr>
+
+        <tr><td>QuestionnaireResponse Linkage</td><td><span class="inline-code">claim.supportingInfo</span></td><td>DTR QuestionnaireResponse</td><td>Reference to QR Bundle</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAS Patient Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-pas-patient" class="resource-panel" style="border-top-color:#38a169;">
+      <button class="close-btn" onclick="hidePasPanel('pas-patient')">×</button>
+      <h3>👤 Patient Resource Mappings (PAS $submit)</h3>
+      <table class="pas-mapping-table">
+        <tr><th>MCG Auto Auth Field</th><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td>Patient ID</td><td><span class="inline-code">patient.identifier</span></td><td>Altruista ID</td><td>Use "MB" as identifier type code</td></tr>
+        <tr><td>Patient First Name</td><td><span class="inline-code">patient.name.given</span></td><td>Patient First Name</td><td>Given name(s)</td></tr>
+        <tr><td>Patient Last Name</td><td><span class="inline-code">patient.name.family</span></td><td>Patient Last Name</td><td>Family/surname</td></tr>
+        <tr><td>Date of Birth</td><td><span class="inline-code">patient.birthDate</span></td><td>Patient DOB</td><td>Format: YYYY-MM-DD</td></tr>
+        <tr><td>Address (Address1)</td><td><span class="inline-code">patient.address.line</span></td><td>Patient Address</td><td>Street address line(s)</td></tr>
+        <tr><td>Address (City)</td><td><span class="inline-code">patient.address.city</span></td><td>Patient City</td><td>City name</td></tr>
+        <tr><td>Address (State)</td><td><span class="inline-code">patient.address.state</span></td><td>Patient State</td><td>Two-letter state code</td></tr>
+        <tr><td>Address (Zipcode)</td><td><span class="inline-code">patient.address.postalCode</span></td><td>Patient Zip</td><td>5 or 9 digit ZIP</td></tr>
+        <tr><td>Gender</td><td><span class="inline-code">patient.gender</span></td><td>Patient Gender</td><td>male | female | other | unknown</td></tr>
+
+      </table>
+    </div>
+  </div>
+
+  <!-- PAS Coverage Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-pas-coverage" class="resource-panel" style="border-top-color:#38a169;">
+      <button class="close-btn" onclick="hidePasPanel('pas-coverage')">×</button>
+      <h3>🛡️ Coverage Resource Mappings (PAS $submit)</h3>
+      <table class="pas-mapping-table">
+        <tr><th>MCG Auto Auth Field</th><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td>Patient Benefit Member ID</td><td><span class="inline-code">coverage.subscriberId</span></td><td>Member ID (configured)</td><td>Subscriber/Member ID</td></tr>
+        <tr><td>Benefit Plan Name</td><td><span class="inline-code">coverage.class.value</span> (where class.type.code == "plan")</td><td>Benefit plan (configured)</td><td>Plan name when class type is "plan"</td></tr>
+ <tr><td>Benefit Product Name</td><td><span class="inline-code">coverage.class.value</span> (where class.type.code == "subplan")</td><td>Patient Benefit product Data rootname (Level-1) LOB</td><td>subplan name when class type is "subplan"</td></tr>
+        <tr><td>Benefit Group ID</td><td><span class="inline-code">NULL</span> (as of now)</td><td>-</td><td>Currently not mapped in MCG Auto Auth</td></tr>
+        <tr><td>LOB (Line of Business)</td><td><span class="inline-code">coverage.type</span></td><td>MAC Configuration</td><td>Value which we are passing in the payload need to be configured in the MCG. Considering the text value in type object.</td></tr>
+<tr><td>subscriber</span></td><td>Patient reference</td><td>Reference to Patient resource</td><td>Patient details</td></tr>
+<tr><td>payor</span></td><td>Organization reference</td><td>Reference to Organization resource</td><td>Organization details (Tenant)</td></tr>
+<tr><td>beneficiary</span></td><td>Patient reference</td><td>Reference to patient resource</td><td>Who is getting benefitted?</td></tr>
+<tr><td>relationship</span></td><td>Self</td><td>-</td><td>In MCG Auto auth this is optional. GC is not supporting this.</td></tr>
+<tr><td>subscriber ID</span></td><td>coverage.subscriber ID</td><td>-</td><td>Need to check the mapping</td></tr>
+
+      </table>
+    </div>
+  </div>
+
+  <!-- PAS Practitioner Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-pas-practitioner" class="resource-panel" style="border-top-color:#38a169;">
+      <button class="close-btn" onclick="hidePasPanel('pas-practitioner')">×</button>
+      <h3>👨‍⚕️ Practitioner Resource Mappings (PAS $submit)</h3>
+      <h4>Requesting Provider</h4>
+      <table class="pas-mapping-table">
+        <tr><th>MCG Auto Auth Field</th><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+         <tr><td>Requesting Provider ID</td><td><span class="inline-code">claim.careTeam.role == "ordering physician"</span></td><td>Provider ID</td><td>Need to check with MCG on exact mapping</td></tr>
+        <tr><td>Provider First Name</td><td><span class="inline-code">practitioner.name.given</span></td><td>Requesting Provider First Name</td><td>Given name</td></tr>
+        <tr><td>Provider Last Name</td><td><span class="inline-code">practitioner.name.family</span></td><td>Requesting Provider Last Name</td><td>Family name</td></tr>
+        <tr><td>Address (Address1)</td><td><span class="inline-code">practitioner.address.line</span></td><td>Requesting Provider Address</td><td>Street address</td></tr>
+        <tr><td>Address (City)</td><td><span class="inline-code">practitioner.address.city</span></td><td>Requesting Provider City</td><td>City name</td></tr>
+        <tr><td>Address (State)</td><td><span class="inline-code">practitioner.address.state</span></td><td>Requesting Provider State</td><td>Two-letter state code</td></tr>
+        <tr><td>Address (Zipcode)</td><td><span class="inline-code">practitioner.address.postalCode</span></td><td>Requesting Provider Zip</td><td>5 or 9 digit ZIP</td></tr>
+ <tr><td>Address (District)</td><td><span class="inline-code">practitioner.address.district</span></td><td>Requesting Provider district</td><td>District name</td></tr>
+
+      </table>
+      <h4 style="margin-top:20px;">Attending Provider</h4>
+      <table class="pas-mapping-table">
+        <tr><th>MCG Auto Auth Field</th><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+       <tr><td>Attending Provider</td><td><span class="inline-code">claim.careTeam.role == "attending physician"</span></td><td>Attending Provider Details</td><td>Identified via CareTeam role</td></tr>
+        <tr><td>Provider First Name</td><td><span class="inline-code">practitioner.name.given</span></td><td>Attending Provider First Name</td><td>Given name</td></tr>
+        <tr><td>Provider Last Name</td><td><span class="inline-code">practitioner.name.family</span></td><td>Attending Provider Last Name</td><td>Family name</td></tr>
+        <tr><td>Address (Address1)</td><td><span class="inline-code">practitioner.address.line</span></td><td>Attending Provider Address</td><td>Street address</td></tr>
+        <tr><td>Address (City)</td><td><span class="inline-code">practitioner.address.city</span></td><td>Attending Provider City</td><td>City name</td></tr>
+        <tr><td>Address (State)</td><td><span class="inline-code">practitioner.address.state</span></td><td>Attending Provider State</td><td>Two-letter state code</td></tr>
+        <tr><td>Address (Zipcode)</td><td><span class="inline-code">practitioner.address.postalCode</span></td><td>Attending Provider Zip</td><td>5 or 9 digit ZIP</td></tr>
+<tr><td>Address (District)</td><td><span class="inline-code">practitioner.address.district</span></td><td>Attending Provider district</td><td>District name</td></tr>
+
+      </table>
+    </div>
+  </div>
+
+  <!-- PAS Location Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-pas-location" class="resource-panel" style="border-top-color:#38a169;">
+      <button class="close-btn" onclick="hidePasPanel('pas-location')">×</button>
+      <h3>📍 Location Resource Mappings (PAS $submit)</h3>
+      <table class="pas-mapping-table">
+        <tr><th>MCG Auto Auth Field</th><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td>Facility Provider ID</td><td><span class="inline-code">location.identifier.value</span></td><td>Facility Provider NPI</td><td>National Provider Identifier</td></tr>
+        <tr><td>Facility Name</td><td><span class="inline-code">location.name</span></td><td>Facility Provider Name</td><td>Name of the facility</td></tr>
+        <tr><td>Place of Service</td><td><span class="inline-code">location.type.coding.code</span></td><td>Place of Service Code</td><td>CMS Place of Service code (e.g., 21, 22)</td></tr>
+        <tr><td>Address (Address1)</td><td><span class="inline-code">location.address.line</span></td><td>Facility Address</td><td>Street address</td></tr>
+        <tr><td>Address (City)</td><td><span class="inline-code">location.address.city</span></td><td>Facility City</td><td>City name</td></tr>
+        <tr><td>Address (State)</td><td><span class="inline-code">location.address.state</span></td><td>Facility State</td><td>Two-letter state code</td></tr>
+        <tr><td>Address (Zipcode)</td><td><span class="inline-code">location.address.postalCode</span></td><td>Facility Zip</td><td>5 or 9 digit ZIP</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAS QR Panel -->
+  <div class="resource-panel-wrapper">
+    <div id="panel-pas-qr" class="resource-panel" style="border-top-color:#38a169;">
+      <button class="close-btn" onclick="hidePasPanel('pas-qr')">×</button>
+      <h3>📝 QuestionnaireResponse Linkage (PAS $submit)</h3>
+      <table class="pas-mapping-table">
+        <tr><th>MCG Auto Auth Field</th><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+        <tr><td>QuestionnaireResponse Linkage</td><td><span class="inline-code">claim.supportingInfo</span></td><td>DTR QuestionnaireResponse</td><td>Reference to nested DTR-QRBundle</td></tr>
+      </table>
+      <div class="alert alert-warning" style="margin-top:15px;">
+        <strong>⚠️ Important:</strong> QuestionnaireResponse must be wrapped in a nested Bundle with profile <span class="inline-code">DTR-QRBundle</span> before including in the PAS Request Bundle.
+      </div>
+      <div class="flow-diagram" style="margin-top:15px;">PAS Request Bundle
+│
+├── Claim
+│   └── supportingInfo → references DTR-QRBundle
+│
+└── Bundle (DTR-QRBundle)  ← Nested Bundle!
+    └── QuestionnaireResponse</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 8 ==================== -->
+<div id="dtr-phase" class="section">
+  <h2>8. Phase 1: DTR (Documentation Templates and Rules)</h2>
+  <div class="card">
+    <h3>Endpoints</h3>
+    <table>
+      <tr><th>Endpoint</th><th>Purpose</th></tr>
+      <tr><td><span class="inline-code">$questionnaire-package</span></td><td>Get questionnaire(s) for a procedure code</td></tr>
+      <tr><td><span class="inline-code">$next-question</span></td><td>Get next question in adaptive flow</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3>Determine Questionnaire Type</h3>
+    <table>
+      <tr><th>Scenario</th><th>Response Type</th><th>Profile</th></tr>
+      <tr><td>ONE guideline matches</td><td><span class="badge badge-green">Standard</span></td><td><span class="inline-code">dtr-std-questionnaire</span></td></tr>
+      <tr><td>MULTIPLE guidelines match</td><td><span class="badge badge-orange">Adaptive</span></td><td><span class="inline-code">dtr-questionnaire-adapt</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 9 ==================== -->
+<div id="questionnaire-response" class="section">
+  <h2>9. Phase 2: Build QuestionnaireResponse</h2>
+  <div class="card">
+    <h3>Required Extensions (Minimum 3)</h3>
+    <table>
+      <tr><th>#</th><th>Extension</th><th>Purpose</th></tr>
+      <tr><td>1</td><td><span class="inline-code">qr-context</span></td><td>Coverage reference</td></tr>
+      <tr><td>2</td><td><span class="inline-code">qr-context</span></td><td>ServiceRequest reference</td></tr>
+      <tr><td>3</td><td><span class="inline-code">intendedUse</span></td><td>How the response will be used</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 10 ==================== -->
+<div id="pas-phase" class="section">
+  <h2>10. Phase 3: PAS (Prior Authorization Support)</h2>
+  <div class="card">
+    <h3>PAS Bundle Structure</h3>
+    <div class="flow-diagram">Bundle (profile-pas-request-bundle)
+│
+├── Claim (the PA request)
+├── Coverage
+├── Patient
+├── Practitioner
+├── Location
+├── Organization (Insurer)
+└── Bundle (DTR-QRBundle)      ← Nested Bundle!
+    └── QuestionnaireResponse</div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 11 ==================== -->
+<div id="validation-errors" class="section">
+  <h2>11. Common Validation Errors &amp; Solutions</h2>
+
+  <div class="error-category">📦 Bundle &amp; Resource ID Errors</div>
+  <div class="card">
+    <table>
+      <tr><th>Error</th><th>Cause</th><th>Solution</th></tr>
+      <tr><td>Missing Bundle.identifier (cardinality 1..1)</td><td>Bundle doesn't have an identifier</td><td>Add <span class="inline-code">identifier</span> with system and value to Bundle</td></tr>
+      <tr><td>Invalid URI for fullUrl</td><td><span class="inline-code">urn:uuid:ALT241992</span> not valid UUID</td><td>Use proper UUID format: <span class="inline-code">urn:uuid:a1b2c3d4-e5f6-7890-abcd-ef1234567890</span></td></tr>
+      <tr><td>ID doesn't match regex <span class="inline-code">[A-Za-z0-9\-\.]{1,64}</span></td><td>ID contains underscore: <span class="inline-code">prov_40907</span></td><td>Replace underscore with hyphen: <span class="inline-code">prov-40907</span></td></tr>
+    </table>
+  </div>
+
+  <div class="error-category">🏥 NPI Validation Errors</div>
+  <div class="card">
+    <table>
+      <tr><th>Error</th><th>Cause</th><th>Solution</th></tr>
+      <tr><td>Invalid NPI (Luhn check failed)</td><td>NPI doesn't pass Luhn algorithm checksum</td><td>Use valid NPIs that pass Luhn validation</td></tr>
+    </table>
+    <h4 style="margin-top:15px;">Valid Test NPIs:</h4>
+    <table>
+      <tr><th>NPI</th><th>Status</th></tr>
+      <tr><td><span class="inline-code">1234567893</span></td><td><span class="badge badge-green">✓ Valid</span></td></tr>
+      <tr><td><span class="inline-code">1245319599</span></td><td><span class="badge badge-green">✓ Valid</span></td></tr>
+      <tr><td><span class="inline-code">1497758544</span></td><td><span class="badge badge-green">✓ Valid</span></td></tr>
+      <tr><td><span class="inline-code">1003000126</span></td><td><span class="badge badge-green">✓ Valid</span></td></tr>
+    </table>
+  </div>
+
+  <div class="error-category">📝 QuestionnaireResponse Errors</div>
+  <div class="card">
+    <table>
+      <tr><th>Error</th><th>Cause</th><th>Solution</th></tr>
+      <tr><td>Instance count is 2, cardinality 3..*</td><td>QuestionnaireResponse needs minimum 3 extensions</td><td>Add all 3 required extensions: 2× qr-context + intendedUse</td></tr>
+      <tr><td>Missing answer.extension (information-origin)</td><td>DTR profile requires info-origin on answers</td><td>Add <span class="inline-code">information-origin</span> extension to answers</td></tr>
+      <tr><td>dtrx-1: Manual/override source needs author</td><td>Using <span class="inline-code">source: manual</span> without author extension</td><td>Either add author extension OR use <span class="inline-code">source: auto</span></td></tr>
+    </table>
+  </div>
+
+  <div class="error-category">💊 Claim &amp; Diagnosis Errors</div>
+  <div class="card">
+    <table>
+      <tr><th>Error</th><th>Cause</th><th>Solution</th></tr>
+      <tr><td>ICD-10 codes in wrong location</td><td>ICD-10 placed in <span class="inline-code">item.productOrService</span></td><td>Move ICD-10 to <span class="inline-code">Claim.diagnosis[]</span>; keep only CPT in <span class="inline-code">item.productOrService</span></td></tr>
+      <tr><td>Missing facility reference</td><td>Claim doesn't reference Location</td><td>Add <span class="inline-code">"facility": { "reference": "Location/xxx" }</span> to Claim</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 12 ==================== -->
+<div id="complete-flow" class="section">
+  <h2>12. Complete Flow Diagram</h2>
+  <div class="card">
+    <div class="flow-diagram">
+┌─────────────────────────────────────────────────────────────────────┐
+│                         DTR PHASE                                   │
+├─────────────────────────────────────────────────────────────────────┤
+│  1. Call $questionnaire-package (CPT code)                         │
+│                        │                                            │
+│              ┌─────────┴──────────┐                                 │
+│         Standard             Adaptive                               │
+│       Questionnaire        Questionnaire                            │
+│                                   │                                 │
+│                          Call $next-question                        │
+│              └─────────┬──────────┘                                 │
+│                        ▼                                            │
+│            Build QuestionnaireResponse                              │
+└─────────────────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                         PAS PHASE                                   │
+├─────────────────────────────────────────────────────────────────────┤
+│  2. Build PAS Bundle → 3. Call $submit → 4. Receive ClaimResponse  │
+└─────────────────────────────────────────────────────────────────────┘</div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 13 ==================== -->
+<div id="best-practices" class="section">
+  <h2>13. Best Practices</h2>
+  <div class="card">
+    <table>
+      <tr><th>#</th><th>Practice</th><th>Reason</th></tr>
+      <tr><td>1</td><td>Always include Patient in $questionnaire-package</td><td>Some guidelines require patient demographics</td></tr>
+      <tr><td>2</td><td>Use valid NPIs (Luhn validated)</td><td>Invalid NPIs cause validation failures</td></tr>
+      <tr><td>3</td><td>Keep CPT and ICD-10 separate</td><td>CPT in item.productOrService, ICD-10 in diagnosis</td></tr>
+      <tr><td>4</td><td>Use hyphens not underscores in IDs</td><td>FHIR regex doesn't allow underscores</td></tr>
+      <tr><td>5</td><td>Wrap QuestionnaireResponse in DTR-QRBundle</td><td>PAS profile requires nested bundle structure</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 14 ==================== -->
+<div id="api-summary" class="section">
+  <h2>14. API Endpoints Summary</h2>
+  <div class="card">
+    <table>
+      <tr><th>Phase</th><th>Endpoint</th><th>Method</th><th>Purpose</th></tr>
+      <tr><td><span class="badge badge-blue">DTR</span></td><td><span class="inline-code">/Questionnaire/$questionnaire-package</span></td><td>POST</td><td>Get questionnaire</td></tr>
+      <tr><td><span class="badge badge-blue">DTR</span></td><td><span class="inline-code">/Questionnaire/$next-question</span></td><td>POST</td><td>Adaptive flow</td></tr>
+      <tr><td><span class="badge badge-green">PAS</span></td><td><span class="inline-code">/Claim/$submit</span></td><td>POST</td><td>Submit PA request</td></tr>
+      <tr><td><span class="badge badge-orange">CareWebQI</span></td><td><span class="inline-code">/CareWebQI/{episodeId}</span></td><td>GET</td><td>Get guideline outcomes</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 15 ==================== -->
+<div id="identifiers" class="section">
+  <h2>15. Key Identifiers to Track</h2>
+  <div class="card">
+    <table>
+      <tr><th>Identifier</th><th>Where It's Set</th><th>Purpose</th></tr>
+      <tr><td>Transaction ID (tid)</td><td>In questionnaire URL</td><td>Links DTR session</td></tr>
+      <tr><td>Episode ID</td><td>Claim.identifier</td><td>MCG case tracking</td></tr>
+      <tr><td>preAuthRef</td><td>ClaimResponse</td><td>Authorization reference number</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 16 ==================== -->
+<div id="sample-payload" class="section">
+  <h2>16. Sample PAS $submit Payload</h2>
+  <div class="alert alert-info"><strong>📌 About this Sample:</strong> Working example for <span class="inline-code">POST /Claim/$submit</span>. Includes all key resources.</div>
+  <div class="card">
+    <pre class="payload-pre">{
+  "resourceType": "Bundle",
+  "id": "a465ffaa-5936-4d98-9c3c-c94df1445233",
+  "meta": {
+    "profile": ["http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-pas-request-bundle"]
+  },
+  "identifier": {
+    "system": "https://guidingcare.healthedge.com/pas-bundle/submitter_transaction_identifier",
+    "value": "a465ffaa-5936-4d98-9c3c-c94df1445233"
+  },
+  "type": "collection",
+  "timestamp": "2025-12-02T19:24:14.842Z",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:59380def-ff86-42b8-be7b-5c69db2440b3",
+      "resource": {
+        "resourceType": "Claim",
+        "id": "59380def-ff86-42b8-be7b-5c69db2440b3",
+        "status": "active",
+        "use": "preauthorization",
+        "patient": { "reference": "Patient/b1c2d3e4-f5a6-7890-abcd-ef1234567890" },
+        "created": "2025-10-08",
+        "insurer": { "reference": "Organization/67541c1c-a494-4d0e-8620-a36d49f25cbd" },
+        "provider": { "reference": "Practitioner/a1b2c3d4-e5f6-7890-abcd-ef1234567003" },
+        "facility": { "reference": "Location/37a1711e-9bc2-4932-8d34-aa27ecbaf2ed" },
+        "priority": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/processpriority", "code": "normal" }] },
+        "diagnosis": [
+          { "sequence": 1, "diagnosisCodeableConcept": { "coding": [{ "system": "http://hl7.org/fhir/sid/icd-10-cm", "code": "J11.08" }] } }
+        ],
+        "item": [
+          {
+            "sequence": 1,
+            "category": { "coding": [{ "system": "https://codesystem.x12.org/005010/1365", "code": "49", "display": "Hospital Room and Board" }] },
+            "productOrService": { "coding": [{ "system": "http://www.ama-assn.org/go/cpt", "code": "27125" }] },
+            "servicedDate": "2025-12-04",
+            "locationCodeableConcept": { "coding": [{ "system": "https://www.cms.gov/Medicare/Coding/place-of-service-codes/Place_of_Service_Code_Set", "code": "21", "display": "Inpatient Hospital" }] }
+          }
+        ]
+      }
+    }
+  ]
+}</pre>
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:40px;padding:20px;background:#edf2f7;border-radius:8px;">
+  <p style="color:#718096;margin:0;"><strong>Document Version:</strong> 2.5 | <strong>Last Updated:</strong> February 2026</p>
+  <p style="color:#a0aec0;margin-top:5px;font-size:14px;">Created by: Durga Vijay Pulavarti</p>
+</div>
+
+<script>
+  var activePanel = null;
+  var activePasPanel = null;
+
+  function showPanel(r) {
+    // Close current if open
+    if (activePanel) {
+      document.getElementById('panel-' + activePanel).classList.remove('active');
+      var oldBubble = document.querySelector('#section4-bubbles .bubble-' + activePanel);
+      if (oldBubble) oldBubble.classList.remove('active');
+    }
+    // Toggle off if same bubble clicked
+    if (activePanel === r) { activePanel = null; return; }
+    // Open new
+    document.getElementById('panel-' + r).classList.add('active');
+    var newBubble = document.querySelector('#section4-bubbles .bubble-' + r);
+    if (newBubble) newBubble.classList.add('active');
+    activePanel = r;
+    document.getElementById('panel-' + r).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hidePanel(r) {
+    document.getElementById('panel-' + r).classList.remove('active');
+    var bubble = document.querySelector('#section4-bubbles .bubble-' + r);
+    if (bubble) bubble.classList.remove('active');
+    activePanel = null;
+  }
+
+  function showPasPanel(r) {
+    if (activePasPanel) {
+      document.getElementById('panel-' + activePasPanel).classList.remove('active');
+      var oldBubble = document.querySelector('#section7-bubbles .bubble-' + activePasPanel.replace('pas-',''));
+      if (oldBubble) oldBubble.classList.remove('active');
+    }
+    if (activePasPanel === r) { activePasPanel = null; return; }
+    document.getElementById('panel-' + r).classList.add('active');
+    activePasPanel = r;
+    document.getElementById('panel-' + r).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hidePasPanel(r) {
+    document.getElementById('panel-' + r).classList.remove('active');
+    activePasPanel = null;
+  }
+</script>
+</body>
+</html>
