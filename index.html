@@ -218,23 +218,37 @@
         </table>
       </div>
     </div>
-    <div class="workflow-step">
+     <div class="workflow-step">
       <div class="step-number">3</div>
       <div class="step-content">
-        <h4>📊 Call MCG CareWebQI, Display Guideline Outcomes &amp; Update Service Lines</h4>
-        <p>Using the <strong>Episode ID</strong> captured from Step 2, GuidingCare calls the <strong>MCG CareWebQI</strong> endpoint to retrieve detailed guideline evaluation outcomes.</p>
+        <h4><span class="step-icon">📊</span> Call MCG CareWebQI, Display Guideline Outcomes &amp; Update Service Lines</h4>
+        <p>Using the <strong>Episode ID</strong> captured from Step 2, GuidingCare calls the <strong>MCG CareWebQI</strong> endpoint to retrieve detailed guideline evaluation outcomes. The outcomes are displayed in the <strong>Decision &gt;&gt; Run Guidelines</strong> section of the GuidingCare UI for all service lines. Additionally, depending on the disposition, GuidingCare must also <strong>update the service line values</strong> directly.</p>
         <div class="endpoint-box">GET /CareWebQI/{episodeId} → MCG CareWebQI API</div>
         <div class="step-details">
+          <h5>📋 CareWebQI Response Contains</h5>
+          <ul>
+            <li><strong>Guideline Name</strong> - Which clinical guideline was evaluated</li>
+            <li><strong>Guideline Version</strong> - Version of the guideline used</li>
+            <li><strong>Outcome Status</strong> - Met/Not Met/Partially Met</li>
+            <li><strong>Indication Details</strong> - Which criteria were satisfied</li>
+            <li><strong>Missing Information</strong> - What additional info might be needed</li>
+            <li><strong>Clinical Rationale</strong> - Explanation for the decision</li>
+          </ul>
+        </div>
+        <div class="step-details" style="margin-top:15px;">
           <h5>🔄 Service Line Update Logic — Based on Disposition</h5>
           <table style="margin-top:8px;">
-            <tr><th>Disposition</th><th>Show in Run Guidelines?</th><th>Update Service Line?</th></tr>
-            <tr><td><span class="badge badge-orange">Pended / Pending</span></td><td>✅ Yes</td><td>❌ No</td></tr>
-            <tr><td><span class="badge badge-green">Approved</span></td><td>✅ Yes</td><td>✅ Yes</td></tr>
-            <tr><td><span class="badge badge-red">Denied</span></td><td>✅ Yes</td><td>✅ Yes</td></tr>
-            <tr><td><span class="badge badge-purple">Partial</span></td><td>✅ Yes</td><td>✅ Yes</td></tr>
+            <tr><th>Disposition</th><th>Show in Run Guidelines?</th><th>Update Service Line?</th><th>What Gets Updated</th></tr>
+            <tr><td><span class="badge badge-orange">Pended / Pending</span></td><td>✅ Yes</td><td>❌ No</td><td>Only shown in guidelines section; service line values remain unchanged</td></tr>
+            <tr><td><span class="badge badge-green">Approved</span></td><td>✅ Yes</td><td>✅ Yes</td><td>Decision status, requested units, and relevant service line fields must be updated</td></tr>
+            <tr><td><span class="badge badge-red">Denied</span></td><td>✅ Yes</td><td>✅ Yes</td><td>Decision status, requested units, and relevant service line fields must be updated</td></tr>
+            <tr><td><span class="badge badge-purple">Partial</span></td><td>✅ Yes</td><td>✅ Yes</td><td>Decision status, requested units, and relevant service line fields must be updated</td></tr>
           </table>
         </div>
- <div class="data-flow">
+        <div class="alert alert-warning" style="margin-top:15px;">
+          <strong>⚠️ Key Rule:</strong> If the disposition is <strong>Pended/Pending</strong>, only display the guideline outcome in the Run Guidelines section — do not update the service line. For <strong>Approved, Denied, or Partial</strong> dispositions, the guideline outcome must be shown <em>and</em> the corresponding service line decision status, requested units, and other values must be updated accordingly.
+        </div>
+       <div class="data-flow">
           <span class="data-item">Access authorization</span><span class="arrow">→</span>
           <span class="data-item">Edit decision</span><span class="arrow">→</span>
           <span class="data-item">Run guidelines</span><span class="arrow">→</span>
@@ -244,7 +258,19 @@
       </div>
     </div>
   </div>
+
+ <div class="card" style="margin-top:30px;">
+    <h3>🔑 Key Data to Track Across Steps</h3>
+    <table>
+      <tr><th>Step</th><th>Input</th><th>Output to Capture</th><th>Used In</th></tr>
+      <tr><td><span class="badge badge-blue">Step 1</span></td><td>Claim Bundle from Provider</td><td>All resources, QuestionnaireResponse</td><td>Step 2 - Build MCG payload</td></tr>
+      <tr><td><span class="badge badge-purple">Step 2</span></td><td>MCG PAS Request Bundle</td><td><strong>Episode ID</strong>, disposition, preAuthRef</td><td>Step 3 - CareWebQI call</td></tr>
+      <tr><td><span class="badge badge-green">Step 3</span></td><td>Episode ID</td><td>Guideline outcomes, indication status</td><td>Run Decision Screen display</td></tr>
+    </table>
+  </div>
 </div>
+
+
 
 <!-- ==================== SECTION 4 ==================== -->
 <div id="resource-mappings" class="section">
@@ -416,11 +442,113 @@
     </table>
   </div>
 </div>
+ <div class="workflow-container" style="margin-top:10px;">
+    <div class="workflow-step">
+      <div class="step-number" style="background:linear-gradient(135deg,#4299e1,#3182ce);">1</div>
+      <div class="step-content" style="border-left-color:#4299e1;">
+        <h4><span class="step-icon">📋</span> Pre Guideline Rule</h4>
+        <p>Evaluated during the <strong>DTR phase</strong> when <span class="inline-code">$questionnaire-package</span> is called. Returns either a Standard or Adaptive questionnaire.</p>
+        <table style="margin-top:15px;">
+          <tr><th>Rule Outcome</th><th>Questionnaire Type</th><th>Profile</th></tr>
+          <tr><td>Single guideline match</td><td><span class="badge badge-green">Standard</span></td><td><span class="inline-code">dtr-std-questionnaire</span></td></tr>
+          <tr><td>Multiple guideline matches</td><td><span class="badge badge-orange">Adaptive</span></td><td><span class="inline-code">dtr-questionnaire-adapt</span></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-number" style="background:linear-gradient(135deg,#48bb78,#38a169);">2</div>
+      <div class="step-content" style="border-left-color:#48bb78;">
+        <h4><span class="step-icon">✅</span> Post Guideline Rule</h4>
+        <p>Evaluated during the <strong>PAS phase</strong> on <span class="inline-code">Claim/$submit</span>. Returns a <strong>disposition</strong> — the decision status of the authorization.</p>
+        <div class="alert alert-warning" style="margin-top:15px;"><strong>⚠️ Admin Site Dependency (Pre-Requisite P4):</strong> The disposition must be configured in Admin Site → Customize → Admin Request to display on the authorization summary screen.</div>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-number" style="background:linear-gradient(135deg,#ed8936,#dd6b20);">3</div>
+      <div class="step-content" style="border-left-color:#ed8936;">
+        <h4><span class="step-icon">🔄</span> Submit Phase Rule</h4>
+        <p>Also runs during the <strong>PAS phase</strong>. Handles the status transition from <strong>Pended</strong> (MCG disposition) → <strong>Pending</strong> (GuidingCare internal status for manual review queue).</p>
+        <div class="alert alert-warning" style="margin-top:15px;"><strong>⚠️ Admin Site Dependency (Pre-Requisite P4):</strong> The "Pending" status must also be configured in Admin Site → Customize → Admin Request.</div>
+        <table style="margin-top:15px;">
+          <tr><th>From (MCG Disposition)</th><th>To (GuidingCare Status)</th></tr>
+          <tr><td><span class="badge badge-orange">Pended</span></td><td><span class="badge badge-yellow">Pending</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:10px;">
+    <h3>🔄 Rule Types in the Integration Flow</h3>
+    <div class="flow-diagram">
+┌─────────────────────────────────────────────────────────────┐
+│              DTR PHASE ($questionnaire-package)             │
+├─────────────────────────────────────────────────────────────┤
+│  PRE GUIDELINE RULE evaluates incoming request              │
+│        │                                                    │
+│        ▼                                                    │
+│  Single match → Standard QR                                 │
+│  Multiple matches → Adaptive QR                             │
+└─────────────────────────────────────────────────────────────┘
+                 │  (QuestionnaireResponse built &amp; submitted)
+                 ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  PAS PHASE (Claim/$submit)                   │
+├─────────────────────────────────────────────────────────────┤
+│  POST GUIDELINE RULE → Disposition (Approved/Denied/Pended) │
+│  ⚠ Must be configured in Admin Site → Admin Request (P4)   │
+│        │  (if Pended)                                       │
+│        ▼                                                    │
+│  SUBMIT PHASE RULE → Pended → Pending (review queue)       │
+│  ⚠ "Pending" must be configured in Admin Site (P4)         │
+└─────────────────────────────────────────────────────────────┘</div>
+  </div>
+</div>
+
 
 <!-- ==================== SECTION 6 ==================== -->
 <div id="prerequisites" class="section">
   <h2>6. Pre-Requisites: Admin Site Configuration for DTR-MCG</h2>
   <div class="alert alert-warning"><strong>⚠️ Important:</strong> Before working on DTR-MCG integration, the following configurations <strong>must be verified or set up</strong> in the Admin Site.</div>
+<div class="workflow-container">
+    <div class="workflow-step">
+      <div class="step-number" style="background:linear-gradient(135deg,#e53e3e,#c53030);font-size:18px;">P1</div>
+      <div class="step-content" style="border-left-color:#e53e3e;">
+        <h4><span class="step-icon">⚙️</span> Rules Configuration in Admin Site</h4>
+        <p>For DTR-MCG rules to work, the rules must first be <strong>configured in the Admin Site</strong>. Without this setup, no guideline evaluation will be triggered.</p>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-number" style="background:linear-gradient(135deg,#e53e3e,#c53030);font-size:18px;">P2</div>
+      <div class="step-content" style="border-left-color:#e53e3e;">
+        <h4><span class="step-icon">🔗</span> Service Type &amp; Level of Care Association</h4>
+        <p>Rules in DTR-MCG operate based on the <strong>Service Type</strong> and <strong>Level of Care</strong> association configured in the Admin Site.</p>
+        <div style="margin-top:12px;background:#1a202c;color:#68d391;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:14px;">Admin Site → Customize → Create Association</div>
+        <div class="alert alert-warning" style="margin-top:12px;"><strong>⚠️</strong> If the Service Type and Level of Care combination is not associated, the DTR rule will <strong>not</strong> be triggered.</div>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-number" style="background:linear-gradient(135deg,#e53e3e,#c53030);font-size:18px;">P3</div>
+      <div class="step-content" style="border-left-color:#e53e3e;">
+        <h4><span class="step-icon">🏷️</span> Line of Business (LOB) Configuration</h4>
+        <p>To view the <strong>LOB</strong> passed in the authorization summary, that LOB value must be pre-configured in the Admin Site.</p>
+        <div style="margin-top:12px;background:#1a202c;color:#68d391;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:14px;">Admin Site → Customize → Create LOB</div>
+        <div class="alert alert-info" style="margin-top:12px;"><strong>Note:</strong> The LOB value in <span class="inline-code">coverage.type</span> must <strong>exactly match</strong> the configured value in the Admin Site.</div>
+      </div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-number" style="background:linear-gradient(135deg,#e53e3e,#c53030);font-size:18px;">P4</div>
+      <div class="step-content" style="border-left-color:#e53e3e;">
+        <h4><span class="step-icon">📋</span> Disposition Status Configuration</h4>
+        <p>The <strong>disposition</strong> from MCG (e.g., Pending, Approved, Denied) will only display on the authorization if the corresponding status is configured in the Admin Site.</p>
+        <div style="margin-top:12px;background:#1a202c;color:#68d391;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:14px;">Admin Site → Customize → Admin Request</div>
+        <table style="margin-top:15px;">
+          <tr><th>MCG Disposition</th><th>Meaning</th><th>Must be Configured?</th></tr>
+          <tr><td><span class="badge badge-green">Approved</span></td><td>Authorization granted</td><td>✅ Yes</td></tr>
+          <tr><td><span class="badge badge-red">Denied</span></td><td>Authorization rejected</td><td>✅ Yes</td></tr>
+          <tr><td><span class="badge badge-orange">Pended</span></td><td>Needs manual review</td><td>✅ Yes</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
   <div class="card" style="border-left:4px solid #e53e3e;">
     <h3>✅ Pre-Requisite Checklist</h3>
     <table>
@@ -593,6 +721,24 @@
   </div>
 </div>
 
+<div class="card" style="margin-top:30px;">
+    <h3>📋 Summary: All Open Questions for PAS $submit</h3>
+    <h4 style="margin-top:15px;color:#2b6cb0;">🔵 GuidingCare (GC) Questions:</h4>
+    <ol style="margin-left:25px;margin-top:10px;">
+      <li>Need to figure out the <strong>Patient MRN</strong> mapping</li>
+      <li>Need to determine <strong>Organization resource</strong> mappings</li>
+    </ol>
+    <h4 style="margin-top:20px;color:#c05621;">🟠 MCG Questions:</h4>
+    <ol style="margin-left:25px;margin-top:10px;">
+      <li>Where can we pass the <strong>requestType</strong> in the payload?<div class="answered-block" style="margin-top:6px;">✅ <strong>Answered:</strong> MCG confirmed there is no mapping. It will fetch requestType from the association of "level of care" &amp; "Service type".</div></li>
+      <li>Unable to see the <strong>"provider" field</strong> referenced practitioner anywhere.<div class="answered-block" style="margin-top:6px;">✅ <strong>Answered:</strong> MCG mentioned provider reference is just for a backup.</div></li>
+      <li>Need to check the <strong>requesting provider mapping</strong></li>
+      <li><strong>LOB (Line of Business)</strong> mapping - MCG is still determining the FHIR element</li>
+    </ol>
+  </div>
+</div>
+
+
 <!-- ==================== SECTION 8 ==================== -->
 <div id="dtr-phase" class="section">
   <h2>8. Phase 1: DTR (Documentation Templates and Rules)</h2>
@@ -648,7 +794,7 @@
 
 <!-- ==================== SECTION 11 ==================== -->
 <div id="validation-errors" class="section">
-  <h2>11. Common Validation Errors &amp; Solutions</h2>
+ <h2>11. Common Validation Errors &amp; Solutions</h2>
 
   <div class="error-category">📦 Bundle &amp; Resource ID Errors</div>
   <div class="card">
@@ -658,6 +804,7 @@
       <tr><td>Invalid URI for fullUrl</td><td><span class="inline-code">urn:uuid:ALT241992</span> not valid UUID</td><td>Use proper UUID format: <span class="inline-code">urn:uuid:a1b2c3d4-e5f6-7890-abcd-ef1234567890</span></td></tr>
       <tr><td>ID doesn't match regex <span class="inline-code">[A-Za-z0-9\-\.]{1,64}</span></td><td>ID contains underscore: <span class="inline-code">prov_40907</span></td><td>Replace underscore with hyphen: <span class="inline-code">prov-40907</span></td></tr>
     </table>
+    <div class="alert alert-info" style="margin-top:15px;"><strong>FHIR ID Rules:</strong><ul style="margin-left:20px;margin-top:5px;"><li>✅ <span class="inline-code">prov-40907</span> (hyphen OK)</li><li>❌ <span class="inline-code">prov_40907</span> (underscore NOT allowed)</li></ul></div>
   </div>
 
   <div class="error-category">🏥 NPI Validation Errors</div>
@@ -676,6 +823,55 @@
     </table>
   </div>
 
+  <div class="error-category">🔗 Service Type &amp; Level of Care (LOC) Association Errors</div>
+  <div class="card">
+    <div class="alert alert-info">
+      <strong>📖 How MCG Determines Level of Care (LOC) — Multi-Step Evaluation:</strong><br><br>
+      As per the MCG PAS Technical Guide, PAS determines LOC from the incoming FHIR Claim using a multi-step evaluation. PAS supports inpatient and outpatient level of care.
+      <ol style="margin-left:20px;margin-top:10px;">
+        <li style="margin-bottom:8px;"><strong>1st Driver — Place of Service:</strong> MCG first looks at <span class="inline-code">claim.item.locationCodeableConcept</span>. If a valid POS code is present and recognized, LOC is derived from it.</li>
+        <li style="margin-bottom:8px;"><strong>2nd Driver — Service Type:</strong> If Place of Service is absent or insufficient, MCG falls back to <span class="inline-code">claim.item.category</span> (Service Type). This Service Type <strong>must be configured in the Admin Site association (P2)</strong>. If not configured, this fallback also fails.</li>
+      </ol>
+    </div>
+    <h4 style="margin-top:20px;">Error 1 — No Active Mapping for ServiceType and LevelOfCare</h4>
+    <table>
+      <tr><th>Error</th><th>Cause</th><th>Solution</th></tr>
+      <tr><td>CareWebQI: No active mapping found for ServiceType and LevelOfCare</td><td>The ServiceType + LevelOfCare combination has no active association in Admin Site</td><td>Admin Site → Customize → Create Association</td></tr>
+    </table>
+    <pre style="margin-top:15px;">{
+  "resourceType": "OperationOutcome",
+  "issue": [{
+    "severity": "error",
+    "code": "exception",
+    "details": {
+      "text": "CareWebQI: No active mapping found for ServiceType 'Consultation' and LevelOfCare 'Outpatient'"
+    }
+  }]
+}</pre>
+    <h4 style="margin-top:20px;">Error 2 — Service Type Not Found in Payer System</h4>
+    <table>
+      <tr><th>Error</th><th>Cause</th><th>Solution</th></tr>
+      <tr><td>CareWebQI: Service type '[value]' not found in the payer system</td><td>Service Type value is not recognized or configured in Admin Site. Place of Service also failed as primary driver.</td><td>Verify Service Type display value exactly matches Admin Site configuration (case-sensitive)</td></tr>
+    </table>
+    <pre style="margin-top:15px;">{
+  "resourceType": "OperationOutcome",
+  "issue": [{
+    "severity": "error",
+    "code": "exception",
+    "details": {
+      "text": "CareWebQI: Service type 'Mail Order Pharmacy' not found in the payer system"
+    }
+  }]
+}</pre>
+    <div class="alert alert-success" style="margin-top:15px;"><strong>✅ How to Fix:</strong> Refer to <strong>Pre-Requisite P2</strong> — navigate to <strong>Admin Site → Customize → Create Association</strong> and ensure the Service Type and Level of Care combination is active and matches the payload values exactly.</div>
+    <h4 style="margin-top:15px;">What to verify in your payload:</h4>
+    <table>
+      <tr><th>FHIR Field</th><th>Maps To (LOC Driver)</th><th>Priority</th><th>Example Value</th></tr>
+      <tr><td><span class="inline-code">claim.item.locationCodeableConcept</span></td><td>Place of Service → LOC</td><td><span class="badge badge-green">1st (Primary)</span></td><td>code: "21" (Inpatient Hospital)</td></tr>
+      <tr><td><span class="inline-code">claim.item.category.coding</span></td><td>Service Type → LOC (via association)</td><td><span class="badge badge-orange">2nd (Fallback)</span></td><td>code: "90", display: "Long Term Care"</td></tr>
+    </table>
+  </div>
+
   <div class="error-category">📝 QuestionnaireResponse Errors</div>
   <div class="card">
     <table>
@@ -684,6 +880,7 @@
       <tr><td>Missing answer.extension (information-origin)</td><td>DTR profile requires info-origin on answers</td><td>Add <span class="inline-code">information-origin</span> extension to answers</td></tr>
       <tr><td>dtrx-1: Manual/override source needs author</td><td>Using <span class="inline-code">source: manual</span> without author extension</td><td>Either add author extension OR use <span class="inline-code">source: auto</span></td></tr>
     </table>
+    <div class="alert alert-danger" style="margin-top:15px;"><strong>⚠ Context Rule:</strong> The <span class="inline-code">information-origin</span> extension is ONLY valid on <span class="inline-code">QuestionnaireResponse.item.answer</span> — NOT on nested item answers.</div>
   </div>
 
   <div class="error-category">💊 Claim &amp; Diagnosis Errors</div>
@@ -694,7 +891,17 @@
       <tr><td>Missing facility reference</td><td>Claim doesn't reference Location</td><td>Add <span class="inline-code">"facility": { "reference": "Location/xxx" }</span> to Claim</td></tr>
     </table>
   </div>
+
+  <div class="error-category">🔐 Coverage &amp; Subscriber Errors</div>
+  <div class="card">
+    <table>
+      <tr><th>Error</th><th>Cause</th><th>Solution</th></tr>
+      <tr><td>Invalid subscriber relationship</td><td>Wrong relationship code</td><td>Use: <span class="inline-code">self</span> (18), <span class="inline-code">spouse</span> (01), <span class="inline-code">child</span> (19)</td></tr>
+      <tr><td>Missing subscriberId</td><td>Coverage doesn't have subscriber ID</td><td>Add <span class="inline-code">subscriberId</span> field to Coverage</td></tr>
+    </table>
+  </div>
 </div>
+  </div>
 
 <!-- ==================== SECTION 12 ==================== -->
 <div id="complete-flow" class="section">
@@ -770,9 +977,22 @@
 <!-- ==================== SECTION 16 ==================== -->
 <div id="sample-payload" class="section">
   <h2>16. Sample PAS $submit Payload</h2>
-  <div class="alert alert-info"><strong>📌 About this Sample:</strong> Working example for <span class="inline-code">POST /Claim/$submit</span>. Includes all key resources.</div>
+  <div class="alert alert-info"><strong>📌 About this Sample:</strong> Working example for <span class="inline-code">POST /Claim/$submit</span>. Includes all key resources. You can select all text inside the code block and copy it.</div>
   <div class="card">
-    <pre class="payload-pre">{
+    <h3>📦 Resources Included</h3>
+    <table>
+      <tr><th>Resource</th><th>Details</th></tr>
+      <tr><td><span class="badge badge-purple">Claim</span></td><td>Institutional, Service Type: Hospital Room and Board (49), CPT: 27125, POS: 21</td></tr>
+      <tr><td><span class="badge badge-green">Patient</span></td><td>Member ID: ALT241992, DOB: 2003-08-22, Gender: Male</td></tr>
+      <tr><td><span class="badge badge-purple">Coverage</span></td><td>LOB: Altruists Health Assurance, Plan: Medicare, Subscriber ID: medi7979</td></tr>
+      <tr><td><span class="badge badge-orange">Practitioner (Attending)</span></td><td>NPI: 1245319599, Role: Attending Physician</td></tr>
+      <tr><td><span class="badge badge-orange">Practitioner (Requesting)</span></td><td>NPI: 1003000126, Role: Ordering Physician</td></tr>
+      <tr><td style="background:#e6fffa;"><span class="badge" style="background:#81e6d9;color:#234e52;">Organization</span></td><td>NPI: 1497758544, Test MCG Insurance</td></tr>
+      <tr><td><span class="badge badge-red">Location</span></td><td>NPI: 1003000126, Gotham General, Seattle WA</td></tr>
+      <tr><td style="background:#fed7e2;"><span class="badge" style="background:#fbb6ce;color:#97266d;">QuestionnaireResponse</span></td><td>Hip Arthroplasty guideline, status: completed</td></tr>
+    </table>
+    <div class="payload-wrapper">
+      <pre class="payload-pre">{
   "resourceType": "Bundle",
   "id": "a465ffaa-5936-4d98-9c3c-c94df1445233",
   "meta": {
@@ -790,7 +1010,10 @@
       "resource": {
         "resourceType": "Claim",
         "id": "59380def-ff86-42b8-be7b-5c69db2440b3",
+        "meta": { "profile": ["http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-claim"] },
+        "identifier": [{ "system": "urn:trnorg:15", "use": "usual", "value": "9381824042" }],
         "status": "active",
+        "type": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/claim-type", "code": "institutional", "display": "Institutional" }] },
         "use": "preauthorization",
         "patient": { "reference": "Patient/b1c2d3e4-f5a6-7890-abcd-ef1234567890" },
         "created": "2025-10-08",
@@ -798,22 +1021,180 @@
         "provider": { "reference": "Practitioner/a1b2c3d4-e5f6-7890-abcd-ef1234567003" },
         "facility": { "reference": "Location/37a1711e-9bc2-4932-8d34-aa27ecbaf2ed" },
         "priority": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/processpriority", "code": "normal" }] },
+        "careTeam": [
+          {
+            "extension": [{ "url": "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-careTeamClaimScope", "valueBoolean": true }],
+            "sequence": 1,
+            "provider": { "reference": "Practitioner/77264e71-28d7-4e15-932e-ab7a970f2bd5" },
+            "role": { "coding": [{ "system": "https://codesystem.x12.org/005010/98", "code": "71", "display": "Attending Physician" }] }
+          },
+          {
+            "extension": [{ "url": "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-careTeamClaimScope", "valueBoolean": true }],
+            "sequence": 2,
+            "provider": { "reference": "Practitioner/ordering-prov-901746646" },
+            "role": { "coding": [{ "system": "https://codesystem.x12.org/005010/98", "code": "DK", "display": "Ordering Physician" }] }
+          }
+        ],
+        "supportingInfo": [
+          {
+            "sequence": 1,
+            "category": { "coding": [{ "system": "http://hl7.org/fhir/us/davinci-pas/CodeSystem/PASSupportingInfoType", "code": "additionalInformation" }] },
+            "valueReference": { "reference": "QuestionnaireResponse/qr-hip-arthroplasty-approved" }
+          }
+        ],
+        "insurance": [{ "sequence": 1, "focal": true, "coverage": { "reference": "Coverage/e0470f2a-7870-4d7a-8d24-6aff814000c6" } }],
         "diagnosis": [
-          { "sequence": 1, "diagnosisCodeableConcept": { "coding": [{ "system": "http://hl7.org/fhir/sid/icd-10-cm", "code": "J11.08" }] } }
+          { "sequence": 1, "diagnosisCodeableConcept": { "coding": [{ "system": "http://hl7.org/fhir/sid/icd-10-cm", "code": "J11.08", "display": "Influenza due to unidentified influenza virus with specified pneumonia" }] } },
+          { "sequence": 2, "diagnosisCodeableConcept": { "coding": [{ "system": "http://hl7.org/fhir/sid/icd-10-cm", "code": "E08.42", "display": "Diabetes mellitus due to underlying condition with diabetic polyneuropathy" }] } }
         ],
         "item": [
           {
+            "extension": [
+              { "url": "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-serviceItemRequestType", "valueCodeableConcept": { "coding": [{ "system": "https://codesystem.x12.org/005010/1525", "code": "HS", "display": "Health Services Review" }] } },
+              { "url": "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-certificationType", "valueCodeableConcept": { "coding": [{ "system": "https://codesystem.x12.org/005010/1322", "code": "I", "display": "Initial" }] } }
+            ],
             "sequence": 1,
+            "careTeamSequence": [1, 2],
+            "diagnosisSequence": [1, 2],
+            "informationSequence": [1],
             "category": { "coding": [{ "system": "https://codesystem.x12.org/005010/1365", "code": "49", "display": "Hospital Room and Board" }] },
-            "productOrService": { "coding": [{ "system": "http://www.ama-assn.org/go/cpt", "code": "27125" }] },
+            "productOrService": { "coding": [{ "system": "http://www.ama-assn.org/go/cpt", "code": "27125", "display": "Inpatient admission" }] },
             "servicedDate": "2025-12-04",
             "locationCodeableConcept": { "coding": [{ "system": "https://www.cms.gov/Medicare/Coding/place-of-service-codes/Place_of_Service_Code_Set", "code": "21", "display": "Inpatient Hospital" }] }
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:b1c2d3e4-f5a6-7890-abcd-ef1234567890",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "b1c2d3e4-f5a6-7890-abcd-ef1234567890",
+        "meta": { "profile": ["http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-beneficiary"] },
+        "identifier": [{ "use": "official", "type": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "MB", "display": "Member Number" }] }, "system": "https://guidingcare.healthedge.com/member-id", "value": "ALT241992" }],
+        "active": true,
+        "name": [{ "use": "official", "family": "Durga Vijay", "given": ["Pulavarti"] }],
+        "telecom": [{ "system": "phone", "value": "432-894-5829", "use": "mobile" }],
+        "gender": "male",
+        "birthDate": "2003-08-22",
+        "address": [{ "use": "home", "type": "physical", "line": ["Sasi vihar apartments"], "city": "Velivennu", "state": "AR", "postalCode": "53432", "district": "US" }]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:e0470f2a-7870-4d7a-8d24-6aff814000c6",
+      "resource": {
+        "resourceType": "Coverage",
+        "id": "e0470f2a-7870-4d7a-8d24-6aff814000c6",
+        "meta": { "profile": ["http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-coverage"] },
+        "type": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode", "code": "MD", "display": "Altruists Health Assurance" }], "text": "Altruists Health Assurance" },
+        "status": "active",
+        "subscriber": { "reference": "Patient/b1c2d3e4-f5a6-7890-abcd-ef1234567890" },
+        "subscriberId": "medi7979",
+        "beneficiary": { "reference": "Patient/b1c2d3e4-f5a6-7890-abcd-ef1234567890" },
+        "relationship": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship", "code": "self", "display": "Self" }] },
+        "payor": [{ "reference": "Organization/67541c1c-a494-4d0e-8620-a36d49f25cbd" }],
+        "class": [
+          { "type": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/coverage-class", "code": "plan" }] }, "value": "Medicare", "name": "Medicare" },
+          { "type": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/coverage-class", "code": "subplan" }] }, "value": "Level-1 Data root name", "name": "GoodbenefitPlan" }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:77264e71-28d7-4e15-932e-ab7a970f2bd5",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "77264e71-28d7-4e15-932e-ab7a970f2bd5",
+        "meta": { "profile": ["http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-practitioner"] },
+        "identifier": [{ "system": "http://hl7.org/fhir/sid/us-npi", "value": "1245319599" }],
+        "active": true,
+        "name": [{ "use": "official", "family": "Ravi teja", "given": ["Pulavarti"] }],
+        "telecom": [{ "system": "phone", "value": "938-182-4042", "use": "work" }],
+        "address": [{ "line": ["MAX Hospitals"], "use": "work", "city": "Bhubhaneswar", "state": "OH", "postalCode": "53432", "district": "Undrajavaram" }]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:b2c3d4e5-f6a7-8901-bcde-f01234567004",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "ordering-prov-901746646",
+        "meta": { "profile": ["http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-practitioner"] },
+        "identifier": [{ "system": "http://hl7.org/fhir/sid/us-npi", "value": "1003000126" }],
+        "active": true,
+        "name": [{ "use": "official", "family": "Patel", "given": ["Rajesh", "M"] }],
+        "telecom": [{ "system": "phone", "value": "555-345-6789", "use": "work" }],
+        "address": [{ "line": ["USA Line Hospitals"], "use": "work", "city": "Portland", "state": "OR", "postalCode": "97201", "district": "Velivennu Mandal" }]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:67541c1c-a494-4d0e-8620-a36d49f25cbd",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "67541c1c-a494-4d0e-8620-a36d49f25cbd",
+        "meta": { "profile": ["http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-insurer"] },
+        "identifier": [{ "system": "http://hl7.org/fhir/sid/us-npi", "value": "1497758544" }],
+        "active": true,
+        "type": [{ "coding": [{ "system": "https://codesystem.x12.org/005010/98", "code": "PR" }] }],
+        "name": "Test MCG Insurance",
+        "address": [{ "line": ["3419 Tyler Avenue"], "city": "Miami", "state": "FL", "postalCode": "33176", "country": "US" }]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:37a1711e-9bc2-4932-8d34-aa27ecbaf2ed",
+      "resource": {
+        "resourceType": "Location",
+        "id": "37a1711e-9bc2-4932-8d34-aa27ecbaf2ed",
+        "meta": { "profile": ["http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-location"] },
+        "identifier": [{ "system": "http://hl7.org/fhir/sid/us-npi", "value": "1003000126" }],
+        "status": "active",
+        "name": "Gotham General",
+        "address": { "type": "physical", "line": ["701 5th Ave Ste. 4900"], "city": "Seattle", "state": "WA", "postalCode": "98104", "district": "facility district" }
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:e1ed230e-55a7-415b-ade3-a1e4404ab7d8",
+      "resource": {
+        "resourceType": "QuestionnaireResponse",
+        "id": "qr-hip-arthroplasty-approved",
+        "meta": { "profile": ["http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse"] },
+        "questionnaire": "http://www.mcg.com/model/questionnaire/29.0/ISC/0109100a?tid=e3e10a37-8948-41f7-a984-81b54da1f6d2&qid=8a58c4cc-fe13-4302-a98b-59c0b8454225&docDx=false",
+        "status": "completed",
+        "subject": { "reference": "Patient/b1c2d3e4-f5a6-7890-abcd-ef1234567890" },
+        "authored": "2025-02-10T10:30:00Z",
+        "author": { "reference": "Practitioner/a1b2c3d4-e5f6-7890-abcd-ef1234567003" },
+        "extension": [
+          { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context", "valueReference": { "reference": "Claim/59380def-ff86-42b8-be7b-5c69db2440b3" } },
+          { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context", "valueReference": { "reference": "ServiceRequest/c1d2e3f4-a5b6-7890-cdef-0123456789cd" } },
+          { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/intendedUse", "valueCodeableConcept": { "coding": [{ "system": "http://hl7.org/fhir/us/davinci-crd/CodeSystem/temp", "code": "withorder", "display": "Include with order" }] } }
+        ],
+        "item": [
+          {
+            "linkId": "7AEB32D7BD8E52C7",
+            "text": "The procedure is/was needed for appropriate care of the patient because of",
+            "item": [
+              {
+                "linkId": "7AEB32D7BD8E52C7-F1CFC1157962C1F3",
+                "text": "Degenerative joint disease, as indicated by",
+                "item": [
+                  { "linkId": "7AEB32D7BD8E52C7-F1CFC1157962C1F3-B364E75DE2C12882", "text": "Moderate to severe radiographic findings", "answer": [{ "valueBoolean": true }] },
+                  { "linkId": "7AEB32D7BD8E52C7-F1CFC1157962C1F3-A55F1C9F7887ED14", "text": "Medical management has been tried and failed.", "answer": [{ "valueBoolean": true }] },
+                  {
+                    "linkId": "7AEB32D7BD8E52C7-F1CFC1157962C1F3-4AB3FCA89BD2157E",
+                    "text": "Arthroplasty indicated due to",
+                    "item": [
+                      { "linkId": "7AEB32D7BD8E52C7-F1CFC1157962C1F3-4AB3FCA89BD2157E-6FE3FD48FD02D676", "text": "Moderate to severe pain", "answer": [{ "valueBoolean": true }] },
+                      { "linkId": "7AEB32D7BD8E52C7-F1CFC1157962C1F3-4AB3FCA89BD2157E-CBCEFE8095B0DAB9", "text": "Functional disability", "answer": [{ "valueBoolean": true }] }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
     }
   ]
 }</pre>
+    </div>
   </div>
 </div>
 
