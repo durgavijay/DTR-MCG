@@ -182,7 +182,7 @@
     <div class="workflow-step">
       <div class="step-number">2</div>
       <div class="step-content">
-        <h4>🔄 GuidingCare Builds MCG Payload &amp; Calls PAS Submit</h4>
+        <h4>🔄 GuidingCare Builds MCG Payload &amp; Calls MCG's PAS Submit</h4>
         <p>GuidingCare receives the Claim payload, transforms it into the MCG-required format, and sends it to the <strong>MCG PAS Submit</strong> endpoint. The response contains the <strong>disposition</strong> (decision status) and <strong>Episode ID</strong>.</p>
         <div class="endpoint-box">POST /Claim/$submit → MCG PAS API</div>
         <div class="step-details">
@@ -294,23 +294,19 @@
       <h3>🛡️ Coverage Resource Mappings</h3>
       <table class="mapping-table">
         <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+	<tr><td><span class="inline-code">type</span></td><td>LOB</td><td>On which LOB serviceRequest is requesting</td></tr>
         <tr><td><span class="inline-code">subscriber</span></td><td>Patient reference</td><td>Reference to Patient resource</td></tr>
         <tr><td><span class="inline-code">subscriberId</span></td><td>MAC configuration for Member ID</td><td>Member ID configured in MAC</td></tr>
         <tr><td><span class="inline-code">beneficiary</span></td><td>Patient reference</td><td>Use if relationship is "self"</td></tr>
         <tr><td><span class="inline-code">payor</span></td><td>Organization reference</td><td>Reference to payer Organization resource</td></tr>
         <tr><td><span class="inline-code">class.type.code</span></td><td>"plan"</td><td>Fixed value</td></tr>
         <tr><td><span class="inline-code">class.value</span></td><td>Benefit Plan Name</td><td>From eligibility record</td></tr>
+	 <tr><td><span class="inline-code">class.type.code</span></td><td>"subplan"</td><td>Fixed value</td></tr>
+        <tr><td><span class="inline-code">class.value</span></td><td>Benefit Product Plan Name</td><td>Data root name in GC</td></tr>
         <tr><td><span class="inline-code">period.start</span></td><td>Eligibility Start Date</td><td>Policy effective start date</td></tr>
         <tr><td><span class="inline-code">period.end</span></td><td>Eligibility End Date</td><td>Policy effective end date</td></tr>
       </table>
-      <div class="question-box">
-        <h4>❓ Open Questions</h4>
-        <ul>
-          <li><strong>BenefitPlanID:</strong> [GC] Unable to find mapping in auto auth - need clarification.</li>
-          <li><strong>BenefitGroupID:</strong> Currently NULL - need to determine if required</li>
-        </ul>
-      </div>
-    </div>
+	<div class="alert alert-info" style="margin-top:12px;"><strong>Resource References:</strong> patient, Organization</div>
   </div>
 
   <!-- ServiceRequest Panel -->
@@ -327,7 +323,9 @@
         <tr><td><span class="inline-code">locationReference</span></td><td>Facility Provider</td><td>Location reference</td></tr>
         <tr><td><span class="inline-code">insurance</span></td><td>Coverage reference</td><td>Reference to Coverage resource</td></tr>
         <tr><td><span class="inline-code">authoredOn</span></td><td>Requested Date of Service</td><td>Date authorization was requested</td></tr>
+	<tr><td><span class="inline-code">reasonCode</span></td><td>Diagnosis codes</td><td>Diagnosis codes against service request</td></tr>
       </table>
+ 	<div class="alert alert-info" style="margin-top:12px;"><strong>Resource References:</strong> patient, 2-practitoners, location, coverage, encounter</div>
       <div class="question-box">
         <h4>❓ Open Questions</h4>
         <ul>
@@ -344,7 +342,7 @@
       <h3>👤 Patient Resource Mappings</h3>
       <table class="mapping-table">
         <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
-        <tr><td><span class="inline-code">identifier.value</span></td><td>AltruistaID</td><td>Use "MB" as identifier type code</td></tr>
+        <tr><td><span class="inline-code">identifier.value</span></td><td>Patient MRN</td><td>Use "MR" as identifier type code</td></tr>
         <tr><td><span class="inline-code">name.given</span></td><td>First Name</td><td>Copy from GC Patient resource</td></tr>
         <tr><td><span class="inline-code">name.family</span></td><td>Last Name</td><td>Copy from GC Patient resource</td></tr>
         <tr><td><span class="inline-code">gender</span></td><td>Gender</td><td>Copy from GC Patient FHIR API</td></tr>
@@ -365,17 +363,12 @@
         <tr><td><span class="inline-code">name</span></td><td>Provider Name</td><td>Copy from GC Practitioner resource</td></tr>
         <tr><td><span class="inline-code">address</span></td><td>Address</td><td>Copy from GC Practitioner resource</td></tr>
       </table>
-      <div class="question-box">
-        <h4>❓ Open Questions</h4>
-        <ul>
-          <li><strong>Facility as Location vs Practitioner:</strong> MCG references Location resource for facility. Need to ask MCG if we can reference Practitioner instead.</li>
+<div class="alert alert-info" style="margin-top:12px;"><strong>Note:</strong>  
           <li>Facility Provider [GC] → location reference [MCG]</li>
           <li>ReferredBy Provider [GC] → servicerequest.requester [MCG]</li>
           <li>Admitting Provider [GC] → servicerequest.performer [MCG]</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+</div>
+     </div>
 
   <!-- Location Panel -->
   <div class="resource-panel-wrapper">
@@ -384,18 +377,12 @@
       <h3>📍 Location Resource Mappings</h3>
       <table class="mapping-table">
         <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
+	<tr><td><span class="inline-code">identifier</span></td><td>NPI value</td><td>Facility Provider NPI</td></tr>
         <tr><td><span class="inline-code">type.coding.code</span></td><td>Place of Service Code</td><td>CMS Place of Service code</td></tr>
         <tr><td><span class="inline-code">name</span></td><td>Facility Name</td><td>From facility provider</td></tr>
         <tr><td><span class="inline-code">address</span></td><td>Facility Address</td><td>From facility provider</td></tr>
       </table>
-      <div class="question-box">
-        <h4>❓ Open Questions</h4>
-        <ul>
-          <li>Mapped to the facility provider. Need to check with MCG</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+     </div>
 
   <!-- Encounter Panel -->
   <div class="resource-panel-wrapper">
@@ -405,6 +392,7 @@
       <table class="mapping-table">
         <tr><th>FHIR Element</th><th>GuidingCare Source</th><th>Notes</th></tr>
         <tr><td><span class="inline-code">class.code</span></td><td>Authorization.RequestedLevelOfCare</td><td>Level of care (IMP, AMB, EMER, etc.)</td></tr>
+	<tr><td><span class="inline-code">serviceType.code</span></td><td>Service Type</td><td>Service type values</td></tr>
         <tr><td><span class="inline-code">status</span></td><td>"planned"</td><td>Fixed value for PA requests</td></tr>
         <tr><td><span class="inline-code">subject</span></td><td>Patient reference</td><td>Reference to Patient resource</td></tr>
       </table>
@@ -514,6 +502,7 @@
       <div class="step-content" style="border-left-color:#e53e3e;">
         <h4><span class="step-icon">⚙️</span> Rules Configuration in Admin Site</h4>
         <p>For DTR-MCG rules to work, the rules must first be <strong>configured in the Admin Site</strong>. Without this setup, no guideline evaluation will be triggered.</p>
+<div style="margin-top:12px;background:#1a202c;color:#68d391;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:14px;">Login to Admin Site → Click Admin → Click Configuration → Click Rule Adminstrator</div>
       </div>
     </div>
     <div class="workflow-step">
@@ -521,7 +510,7 @@
       <div class="step-content" style="border-left-color:#e53e3e;">
         <h4><span class="step-icon">🔗</span> Service Type &amp; Level of Care Association</h4>
         <p>Rules in DTR-MCG operate based on the <strong>Service Type</strong> and <strong>Level of Care</strong> association configured in the Admin Site.</p>
-        <div style="margin-top:12px;background:#1a202c;color:#68d391;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:14px;">Admin Site → Customize → Create Association</div>
+        <div style="margin-top:12px;background:#1a202c;color:#68d391;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:14px;">Login to Admin Site → Click Admin → Click Customize → Click the link in Customize Collaborative Care Configurations</div>
         <div class="alert alert-warning" style="margin-top:12px;"><strong>⚠️</strong> If the Service Type and Level of Care combination is not associated, the DTR rule will <strong>not</strong> be triggered.</div>
       </div>
     </div>
@@ -530,7 +519,7 @@
       <div class="step-content" style="border-left-color:#e53e3e;">
         <h4><span class="step-icon">🏷️</span> Line of Business (LOB) Configuration</h4>
         <p>To view the <strong>LOB</strong> passed in the authorization summary, that LOB value must be pre-configured in the Admin Site.</p>
-        <div style="margin-top:12px;background:#1a202c;color:#68d391;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:14px;">Admin Site → Customize → Create LOB</div>
+        <div style="margin-top:12px;background:#1a202c;color:#68d391;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:14px;">Login to Admin Site → Click Admin → Click Customize → Customize Line Of Business</div>
         <div class="alert alert-info" style="margin-top:12px;"><strong>Note:</strong> The LOB value in <span class="inline-code">coverage.type</span> must <strong>exactly match</strong> the configured value in the Admin Site.</div>
       </div>
     </div>
@@ -539,7 +528,7 @@
       <div class="step-content" style="border-left-color:#e53e3e;">
         <h4><span class="step-icon">📋</span> Disposition Status Configuration</h4>
         <p>The <strong>disposition</strong> from MCG (e.g., Pending, Approved, Denied) will only display on the authorization if the corresponding status is configured in the Admin Site.</p>
-        <div style="margin-top:12px;background:#1a202c;color:#68d391;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:14px;">Admin Site → Customize → Admin Request</div>
+        <div style="margin-top:12px;background:#1a202c;color:#68d391;padding:12px 16px;border-radius:8px;font-family:monospace;font-size:14px;">Login to Admin Site → Click Admin → Click Customize → Click Customize Auto Authorization Dropdowns → Click Auto-Auth Request Status</div>
         <table style="margin-top:15px;">
           <tr><th>MCG Disposition</th><th>Meaning</th><th>Must be Configured?</th></tr>
           <tr><td><span class="badge badge-green">Approved</span></td><td>Authorization granted</td><td>✅ Yes</td></tr>
@@ -557,7 +546,7 @@
       <tr><td><span class="badge badge-red">P2</span></td><td>Service Type &amp; Level of Care Association</td><td>Login to Admin Site → Click Admin → Click Customize → Click the link in Customize Collaborative Care Configurations
 </td><td>PAS API will throw error if no match found</td></tr>
       <tr><td><span class="badge badge-red">P3</span></td><td>LOB (Line of Business) configured</td><td>Login to Admin Site → Click Admin → Click Customize → Customize Line Of Business</td><td>LOB not visible in authorization summary</td></tr>
-      <tr><td><span class="badge badge-red">P4</span></td><td>Disposition status configured</td><td>Login to Admin Site → Click Admin → Click Customize → Click Customize Auto Authorization Dropdowns → Click Auto-Auth Request Status → </td><td>Disposition wil not display correctly in the response from MCG PAS API</td></tr>
+      <tr><td><span class="badge badge-red">P4</span></td><td>Disposition status configured</td><td>Login to Admin Site → Click Admin → Click Customize → Click Customize Auto Authorization Dropdowns → Click Auto-Auth Request Status</td><td>Disposition wil not display correctly in the response from MCG PAS API</td></tr>
     </table>
   </div>
 </div>
@@ -732,8 +721,6 @@
     <ol style="margin-left:25px;margin-top:10px;">
       <li>Where can we pass the <strong>requestType</strong> in the payload?<div class="answered-block" style="margin-top:6px;">✅ <strong>Answered:</strong> MCG confirmed there is no mapping. It will fetch requestType from the association of "level of care" &amp; "Service type".</div></li>
       <li>Unable to see the <strong>"provider" field</strong> referenced practitioner anywhere.<div class="answered-block" style="margin-top:6px;">✅ <strong>Answered:</strong> MCG mentioned provider reference is just for a backup.</div></li>
-      <li>Need to check the <strong>requesting provider mapping</strong></li>
-      <li><strong>LOB (Line of Business)</strong> mapping - MCG is still determining the FHIR element</li>
     </ol>
   </div>
 </div>
