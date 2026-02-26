@@ -120,17 +120,37 @@
 <div id="overview" class="section">
   <h2>1. Overview</h2>
   <div class="card">
-    <p>This document covers the complete workflow for integrating with MCG's DTR (Documentation Templates and Rules) and PAS (Prior Authorization Support) APIs for healthcare prior authorization.</p>
-    <div class="alert alert-info">
-      <strong>Key Components:</strong>
-      <ul style="margin-top:10px;margin-left:20px;">
-        <li><strong>DTR</strong> - Retrieve clinical questionnaires and collect documentation</li>
-        <li><strong>PAS</strong> - Submit prior authorization requests and receive decisions</li>
+    <p>This document covers the complete workflow for integrating <strong>GuidingCare</strong> with <strong>MCG's DTR (Documentation Templates and Rules)</strong> and <strong>PAS (Prior Authorization Support)</strong> APIs to enhance the prior authorization process.</p>
+
+    <p>Without this integration, GuidingCare processes prior authorization requests internally without leveraging MCG's clinical guidelines engine. This integration bridges that gap by connecting GuidingCare to MCG's AutoAuth system, enabling two core capabilities:</p>
+
+    <div class="alert alert-info" style="margin-top:15px;">
+      <strong>🎯 Two Primary Goals of This Integration:</strong>
+      <ol style="margin-top:12px; margin-left:20px; line-height:2;">
+        <li>
+          <strong>MCG AutoAuth Decisioning</strong> — GuidingCare submits prior authorization requests to MCG's PAS endpoint (<span class="inline-code">Claim/$submit</span>), which evaluates the request against MCG's clinical guidelines and returns an automated authorization decision (Approved / Denied / Pended). This allows payers to leverage MCG's industry-standard clinical criteria directly within the GuidingCare workflow, reducing manual review effort and improving decision consistency.
+        </li>
+        <li style="margin-top:10px;">
+          <strong>Displaying Guideline Outcomes</strong> — After a decision is returned, GuidingCare calls MCG's CareWebQI endpoint using the Episode ID to retrieve detailed guideline evaluation outcomes — including which clinical criteria were met or not met, indication details, and clinical rationale. These outcomes are displayed in the <strong>Decision &gt;&gt; Run Guidelines</strong> section of the GuidingCare UI, giving reviewers full transparency into how the authorization decision was reached.
+        </li>
+      </ol>
+    </div>
+
+    <div class="alert alert-warning" style="margin-top:15px;">
+      <strong>📌 Why MCG's PAS Endpoint?</strong><br><br>
+      MCG's PAS (Prior Authorization Support) endpoint is the FHIR-compliant API through which GuidingCare submits structured prior authorization requests. It is the entry point to MCG's AutoAuth decisioning engine — without calling this endpoint, neither the automated decision nor the guideline outcomes can be retrieved. The DTR phase (questionnaire collection) feeds clinical documentation into this submission to improve decision accuracy.
+    </div>
+
+    <div class="alert alert-success" style="margin-top:15px;">
+      <strong>🔑 Key Components:</strong>
+      <ul style="margin-top:10px; margin-left:20px; line-height:1.9;">
+        <li><strong>DTR (Documentation Templates and Rules)</strong> — Retrieves clinical questionnaires from MCG and collects structured documentation from the provider before the authorization is submitted. This ensures the PAS submission includes all relevant clinical information for accurate decisioning.</li>
+        <li><strong>PAS (Prior Authorization Support)</strong> — Submits the prior authorization request bundle to MCG's AutoAuth engine and receives the authorization decision (disposition) along with an Episode ID for outcome retrieval.</li>
+        <li><strong>CareWebQI</strong> — MCG's guideline outcomes API, called after PAS submission using the Episode ID, to retrieve and display the detailed clinical indication results in GuidingCare's Run Guidelines screen.</li>
       </ul>
     </div>
   </div>
 </div>
-
 <!-- ==================== SECTION 2 ==================== -->
 <div id="architecture" class="section">
   <h2>2. Architecture Overview</h2>
@@ -542,7 +562,7 @@
     <h3>✅ Pre-Requisite Checklist</h3>
     <table>
       <tr><th>#</th><th>Pre-Requisite</th><th>Admin Site Navigation</th><th>Impact if Missing</th></tr>
-      <tr><td><span class="badge badge-red">P1</span></td><td>Rules configured in Admin Site</td><td>Login to Admin Site → Click Admin → Click Configuration → Click Rule Adminstrator</td><td>No guideline evaluation triggered</td></tr>
+      <tr><td><span class="badge badge-red">P1</span></td><td>Rules configured in Admin Site</td><td>Login to Admin Site → Click Admin → Click Configuration → Click Rule Adminstrator</td><td>No guideline evaluation triggered on rule. It will be pended by default.</td></tr>
       <tr><td><span class="badge badge-red">P2</span></td><td>Service Type &amp; Level of Care Association</td><td>Login to Admin Site → Click Admin → Click Customize → Click the link in Customize Collaborative Care Configurations
 </td><td>PAS API will throw error if no match found</td></tr>
       <tr><td><span class="badge badge-red">P3</span></td><td>LOB (Line of Business) configured</td><td>Login to Admin Site → Click Admin → Click Customize → Customize Line Of Business</td><td>LOB not visible in authorization summary</td></tr>
@@ -580,7 +600,6 @@
         <tr><td>Diagnosis Codes</td><td><span class="inline-code">claim.diagnosis.diagnosisCodeableConcept</span></td><td>Diagnosis Codes</td><td>ICD-10 codes in diagnosis array</td></tr>
         <tr><td>Procedure Codes</td><td><span class="inline-code">claim.item.productOrService.coding.code</span></td><td>Procedure Code</td><td>CPT/HCPCS codes</td></tr>
         <tr><td>Urgent</td><td><span class="inline-code">claim.priority</span></td><td>Auth Priority (TAT config isExpedited)</td><td>Priority/urgency indicator</td></tr>
-<tr><td>Diagnosis codes</td><td><span class="inline-code">claim.diagnosis</span></td><td>Diagnosis codes</td><td>Category in the system, codes in the code.</td></tr>
 <tr><td>patient linkage</td><td><span class="inline-code">claim.patient</span></td><td>Reference patient</td><td>Resource patient</td></tr>
 <tr><td>organization linkage</td><td><span class="inline-code">claim.insurer</span></td><td>Reference organization</td><td>Resource organization</td></tr>
 <tr><td>practitioner linkage</td><td><span class="inline-code">claim.provider</span></td><td>Reference practitioner</td><td>Resource practitioner</td></tr>
